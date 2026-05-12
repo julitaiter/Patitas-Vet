@@ -1,0 +1,55 @@
+$color-principal: #198754;
+$color-secundario: #f4c95d;
+$color-fondo: #f8f9fa;
+$color-texto: #212529;
+
+body {
+    background-color: $color-fondo;
+    color: $color-texto;
+}
+
+.navbar-brand {
+    letter-spacing: 1px;
+}
+
+.carousel-img {
+    height: 500px;
+    object-fit: cover;
+    filter: brightness(60%);
+}
+
+.carousel-caption {
+    h1 {
+        font-size: 3rem;
+        font-weight: bold;
+    }
+
+    p {
+        font-size: 1.2rem;
+    }
+}
+
+.card {
+    border: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
+    } 
+
+    img {
+        height: 220px;
+        object-fit: cover;
+    }
+}
+
+.btn-success {
+    background-color: $color-principal;
+    border-color: $color-principal;
+
+    &:hover {
+        background-color: darken($color-principal, 10%);
+        border-color: darken($color-principal, 10%);
+    }
+}

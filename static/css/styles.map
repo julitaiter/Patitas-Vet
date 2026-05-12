@@ -1,0 +1,12 @@
+{
+	"version": 3,
+	"file": "styles.css",
+	"sources": [
+		"../scss/styles.scss"
+	],
+	"sourcesContent": [
+		"$color-principal: #198754;\r\n$color-secundario: #f4c95d;\r\n$color-fondo: #f8f9fa;\r\n$color-texto: #212529;\r\n\r\nbody {\r\n    background-color: $color-fondo;\r\n    color: $color-texto;\r\n}\r\n\r\n.navbar-brand {\r\n    letter-spacing: 1px;\r\n}\r\n\r\n.carousel-img {\r\n    height: 500px;\r\n    object-fit: cover;\r\n    filter: brightness(60%);\r\n}\r\n\r\n.carousel-caption {\r\n    h1 {\r\n        font-size: 3rem;\r\n        font-weight: bold;\r\n    }\r\n\r\n    p {\r\n        font-size: 1.2rem;\r\n    }\r\n}\r\n\r\n.card {\r\n    border: none;\r\n    transition: transform 0.3s ease, box-shadow 0.3s ease;\r\n\r\n    &:hover {\r\n        transform: translateY(-5px);\r\n        box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);\r\n    } \r\n\r\n    img {\r\n        height: 220px;\r\n        object-fit: cover;\r\n    }\r\n}\r\n\r\n.btn-success {\r\n    background-color: $color-principal;\r\n    border-color: $color-principal;\r\n\r\n    &:hover {\r\n        background-color: darken($color-principal, 10%);\r\n        border-color: darken($color-principal, 10%);\r\n    }\r\n}"
+	],
+	"names": [],
+	"mappings": ";AAKA,AAAA,IAAI,CAAC;EACD,gBAAgB,EAJN,OAAO;EAKjB,KAAK,EAJK,OAAO;CAKpB;;;AAED,AAAA,aAAa,CAAC;EACV,cAAc,EAAE,GAAG;CACtB;;;AAED,AAAA,aAAa,CAAC;EACV,MAAM,EAAE,KAAK;EACb,UAAU,EAAE,KAAK;EACjB,MAAM,EAAE,eAAe;CAC1B;;;AAED,AACI,iBADa,CACb,EAAE,CAAC;EACC,SAAS,EAAE,IAAI;EACf,WAAW,EAAE,IAAI;CACpB;;;AAJL,AAMI,iBANa,CAMb,CAAC,CAAC;EACE,SAAS,EAAE,MAAM;CACpB;;;AAGL,AAAA,KAAK,CAAC;EACF,MAAM,EAAE,IAAI;EACZ,UAAU,EAAE,yCAAyC;CAWxD;;;AAbD,AAII,KAJC,AAIA,MAAM,CAAC;EACJ,SAAS,EAAE,gBAAgB;EAC3B,UAAU,EAAE,CAAC,CAAC,IAAI,CAAC,IAAI,CAAC,mBAAmB;CAC9C;;;AAPL,AASI,KATC,CASD,GAAG,CAAC;EACA,MAAM,EAAE,KAAK;EACb,UAAU,EAAE,KAAK;CACpB;;;AAGL,AAAA,YAAY,CAAC;EACT,gBAAgB,EA/CF,OAAO;EAgDrB,YAAY,EAhDE,OAAO;CAsDxB;;;AARD,AAII,YAJQ,AAIP,MAAM,CAAC;EACJ,gBAAgB,EAAE,OAA6B;EAC/C,YAAY,EAAE,OAA6B;CAC9C"
+}

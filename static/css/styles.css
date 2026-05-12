@@ -1,0 +1,60 @@
+/* line 6, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+body {
+  background-color: #f8f9fa;
+  color: #212529;
+}
+
+/* line 11, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+.navbar-brand {
+  letter-spacing: 1px;
+}
+
+/* line 15, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+.carousel-img {
+  height: 500px;
+  object-fit: cover;
+  filter: brightness(60%);
+}
+
+/* line 22, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+.carousel-caption h1 {
+  font-size: 3rem;
+  font-weight: bold;
+}
+
+/* line 27, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+.carousel-caption p {
+  font-size: 1.2rem;
+}
+
+/* line 32, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+.card {
+  border: none;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* line 36, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
+}
+
+/* line 41, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+.card img {
+  height: 220px;
+  object-fit: cover;
+}
+
+/* line 47, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+.btn-success {
+  background-color: #198754;
+  border-color: #198754;
+}
+
+/* line 51, ../../Users/Usuario/OneDrive/Documentos/patitasvet/static/scss/styles.scss */
+.btn-success:hover {
+  background-color: #115c39;
+  border-color: #115c39;
+}
+
+/*# sourceMappingURL=styles.css.map */
