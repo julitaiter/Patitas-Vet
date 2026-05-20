@@ -20,6 +20,3 @@ staticfiles/
 .DS_Store
 .vscode/
 .idea/
-
-# Otros
-*.mp4
