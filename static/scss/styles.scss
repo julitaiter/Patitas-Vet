@@ -141,3 +141,23 @@ body {
         align-items: flex-start;
     }
 }
+
+.user-avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+}
+
+.dropdown-menu {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.12);
+}
+
+.dropdown-item {
+    padding: 0.5rem 1rem;
+
+    &:active {
+        background-color: $color-principal;
+    }
+}

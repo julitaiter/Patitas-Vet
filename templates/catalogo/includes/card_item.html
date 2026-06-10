@@ -14,12 +14,23 @@
             {% endif %}
 
             <p class="card-text">{{ item.descripcion }}</p>
-            <p class="catalogo-precio">$ {{ item.precio }}</p>
 
-            {% if tipo == 'servicio' %}
+            <p class="catalogo-precio">
+                $ {{ item.precio }}
+            </p>
+
+            {% if tipo == "producto" %}
+            {% if item.stock > 0 %}
+            <p class="small text-success">Stock disponible: {{ item.stock }}</p>
+            {% else %}
+            <p class="small text-danger">Sin stock</p>
+            {% endif %}
+            {% endif %}
+
             <div class="mt-auto">
+                {% if tipo == "servicio" %}
                 {% if user.is_authenticated %}
-                <a href="#" class="btn btn-success w-100">
+                <a href="{% url 'solicitar_turno' servicio_pk=item.pk %}" class="btn btn-success w-100">
                     Solicitar turno
                 </a>
                 {% else %}
@@ -27,8 +38,22 @@
                     Iniciar sesión para solicitar
                 </a>
                 {% endif %}
+                {% endif %}
+
+                {% if user.is_staff %}
+                <div class="d-flex gap-2 mt-3">
+                    <a href="{% url 'editar_item' model=tipo pk=item.pk %}"
+                        class="btn btn-outline-primary btn-sm w-100">
+                        Editar
+                    </a>
+
+                    <a href="{% url 'eliminar_item' model=tipo pk=item.pk %}"
+                        class="btn btn-outline-danger btn-sm w-100">
+                        Eliminar
+                    </a>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
     </div>
 </div>

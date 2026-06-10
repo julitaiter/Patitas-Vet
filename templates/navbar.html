@@ -28,30 +28,68 @@
 
                 {% if user.is_authenticated %}
                 <li class="nav-item">
-                    <span class="nav-link">
-                        Hola, {{ user.username }}
-                    </span>
-                </li>
-
-                {% if user.is_staff %}
-                <li class="nav-item">
-                    <a class="btn btn-light btn-sm ms-lg-2" href="{% url 'nuevo_item' model='servicio' %}">
-                        Agregar servicio
+                    <a class="nav-link" href="{% url 'mis_turnos' %}">
+                        Mis turnos
                     </a>
                 </li>
 
-                <li class="nav-item">
-                    <a class="btn btn-outline-light btn-sm ms-lg-2 mt-2 mt-lg-0"
-                        href="{% url 'nuevo_item' model='producto' %}">
-                        Agregar producto
+                <li class="nav-item dropdown ms-lg-2">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center gap-2" href="#" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        <span
+                            class="rounded-circle bg-light text-success fw-bold d-inline-flex align-items-center justify-content-center user-avatar">
+                            {{ user.username|first|upper }}
+                        </span>
+                        <span>{{ user.username }}</span>
                     </a>
-                </li>
-                {% endif %}
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'account_logout' %}">
-                        Salir
-                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <h6 class="dropdown-header">
+                                Hola, {{ user.username }}
+                            </h6>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item" href="{% url 'mis_turnos' %}">
+                                Mis turnos
+                            </a>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                Mi perfil
+                            </a>
+                        </li>
+
+                        {% if user.is_staff %}
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li>
+                            <h6 class="dropdown-header">
+                                Administración
+                            </h6>
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item" href="/admin/" target="_blank">
+                                Panel admin
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+
+                        <li>
+                            <a class="dropdown-item text-danger" href="{% url 'account_logout' %}">
+                                Cerrar sesión
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 {% else %}
                 <li class="nav-item">

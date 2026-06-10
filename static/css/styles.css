@@ -149,4 +149,28 @@ body {
   }
 }
 
+/* line 145, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 0.9rem;
+}
+
+/* line 151, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.dropdown-menu {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.12);
+}
+
+/* line 157, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.dropdown-item {
+  padding: 0.5rem 1rem;
+}
+
+/* line 160, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.dropdown-item:active {
+  background-color: #198754;
+}
+
 /*# sourceMappingURL=styles.css.map */

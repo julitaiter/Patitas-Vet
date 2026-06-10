@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Mis turnos | Patitas Vet{% endblock %}
+
+{% block content %}
+
+<section class="container my-5">
+    <h1 class="mb-4">Mis turnos</h1>
+
+    {% if turnos %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Servicio</th>
+                    <th>Mascota</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for turno in turnos %}
+                <tr>
+                    <td>{{ turno.servicio.nombre }}</td>
+                    <td>{{ turno.mascota }}</td>
+                    <td>{{ turno.fecha }}</td>
+                    <td>{{ turno.hora }}</td>
+                    <td>
+                        <span class="badge bg-secondary">
+                            {{ turno.get_estado_display }}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted">
+        Todavía no solicitaste turnos.
+    </p>
+    {% endif %}
+</section>
+
+{% endblock %}
