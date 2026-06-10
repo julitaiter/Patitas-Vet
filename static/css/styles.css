@@ -1,60 +1,152 @@
-/* line 6, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+/* line 10, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
 body {
   background-color: #f8f9fa;
   color: #212529;
 }
 
-/* line 11, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+/* line 15, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
 .navbar-brand {
   letter-spacing: 1px;
 }
 
-/* line 15, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+/* line 19, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
 .carousel-img {
   height: 500px;
   object-fit: cover;
   filter: brightness(60%);
 }
 
-/* line 22, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+/* line 26, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
 .carousel-caption h1 {
   font-size: 3rem;
   font-weight: bold;
 }
 
-/* line 27, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+/* line 31, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
 .carousel-caption p {
   font-size: 1.2rem;
 }
 
-/* line 32, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+/* line 36, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
 .card {
   border: none;
+  border-radius: 1rem;
+  overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* line 36, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+/* line 42, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
 .card:hover {
   transform: translateY(-5px);
   box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.15);
 }
 
-/* line 41, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+/* line 47, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
 .card img {
   height: 220px;
   object-fit: cover;
 }
 
-/* line 47, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+/* line 53, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.card-title {
+  font-weight: 700;
+}
+
+/* line 57, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.card-text {
+  color: #6c757d;
+}
+
+/* line 61, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.catalogo-section {
+  margin-bottom: 3rem;
+}
+
+/* line 65, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.catalogo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* line 73, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.catalogo-precio {
+  color: #198754;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+/* line 79, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
 .btn-success {
   background-color: #198754;
   border-color: #198754;
 }
 
-/* line 51, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
-.btn-success:hover {
+/* line 83, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.btn-success:hover, .btn-success:focus {
   background-color: #115c39;
   border-color: #115c39;
+}
+
+/* line 90, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.btn-primary {
+  background-color: #f4c95d;
+  border-color: #f4c95d;
+  color: #212529;
+  font-weight: 600;
+}
+
+/* line 96, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #f1b92d;
+  border-color: #f1b92d;
+  color: #212529;
+}
+
+/* line 104, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.form-control,
+.form-select {
+  border-radius: 0.75rem;
+}
+
+/* line 108, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.form-control:focus,
+.form-select:focus {
+  border-color: #198754;
+  box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+/* line 114, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.form-error,
+.errorlist {
+  margin-top: 0.25rem;
+  margin-bottom: 0;
+  padding-left: 0;
+  color: #dc3545;
+  font-size: 0.875rem;
+  list-style: none;
+}
+
+@media (max-width: 768px) {
+  /* line 125, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+  .carousel-img {
+    height: 320px;
+  }
+  /* line 130, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+  .carousel-caption h1 {
+    font-size: 2rem;
+  }
+  /* line 134, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+  .carousel-caption p {
+    font-size: 1rem;
+  }
+  /* line 139, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+  .catalogo-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 /*# sourceMappingURL=styles.css.map */

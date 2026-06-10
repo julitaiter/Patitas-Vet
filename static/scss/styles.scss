@@ -1,7 +1,11 @@
 $color-principal: #198754;
+$color-principal-oscuro: darken($color-principal, 10%);
 $color-secundario: #f4c95d;
 $color-fondo: #f8f9fa;
 $color-texto: #212529;
+$color-muted: #6c757d;
+$radio-card: 1rem;
+$transicion-base: 0.3s ease;
 
 body {
     background-color: $color-fondo;
@@ -31,7 +35,9 @@ body {
 
 .card {
     border: none;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: $radio-card;
+    overflow: hidden;
+    transition: transform $transicion-base, box-shadow $transicion-base;
 
     &:hover {
         transform: translateY(-5px);
@@ -44,12 +50,94 @@ body {
     }
 }
 
+.card-title {
+    font-weight: 700;
+}
+
+.card-text {
+    color: $color-muted;
+}
+
+.catalogo-section {
+    margin-bottom: 3rem;
+}
+
+.catalogo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.catalogo-precio {
+    color: $color-principal;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
 .btn-success {
     background-color: $color-principal;
     border-color: $color-principal;
 
-    &:hover {
-        background-color: darken($color-principal, 10%);
-        border-color: darken($color-principal, 10%);
+    &:hover,
+    &:focus {
+        background-color: $color-principal-oscuro;
+        border-color: $color-principal-oscuro;
+    }
+}
+
+.btn-primary {
+    background-color: $color-secundario;
+    border-color: $color-secundario;
+    color: $color-texto;
+    font-weight: 600;
+
+    &:hover,
+    &:focus {
+        background-color: darken($color-secundario, 10%);
+        border-color: darken($color-secundario, 10%);
+        color: $color-texto;
+    }
+}
+
+.form-control,
+.form-select {
+    border-radius: 0.75rem;
+
+    &:focus {
+        border-color: $color-principal;
+        box-shadow: 0 0 0 0.25rem rgba($color-principal, 0.25);
+    }
+}
+
+.form-error,
+.errorlist {
+    margin-top: 0.25rem;
+    margin-bottom: 0;
+    padding-left: 0;
+    color: #dc3545;
+    font-size: 0.875rem;
+    list-style: none;
+}
+
+@media (max-width: 768px) {
+    .carousel-img {
+        height: 320px;
+    }
+
+    .carousel-caption {
+        h1 {
+            font-size: 2rem;
+        }
+
+        p {
+            font-size: 1rem;
+        }
+    }
+
+    .catalogo-header {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
