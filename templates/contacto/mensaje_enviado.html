@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-center">Mensaje Enviado</h1>
+            <p class="text-center">Gracias por contactarnos. Nos pondremos en contacto contigo pronto.</p>
+        </div>
+        <div class="col-12 text-center">
+            <a href="{% url 'contacto:index' %}" class="btn btn-primary">Volver al formulario de contacto</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
