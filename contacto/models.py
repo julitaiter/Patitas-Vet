@@ -24,11 +24,11 @@ class Consulta(models.Model):
     
     def estado_respuesta(self):
         if self.estado == self.CONTESTADA:
-            return format_html("<span style='color: green;'>{}</span>", "Contestada")
+            return format_html("<span style='background-color: #0a0; color: #fff;'>{}</span>", "Contestada")
         elif self.estado == self.NO_CONTESTADA:
-            return format_html("<span style='color: orange;'>{}</span>", "No contestada")
+            return format_html("<span style='background-color: #a00; color: #fff;'>{}</span>", "No contestada")
         elif self.estado == self.EN_PROCESO:
-            return format_html("<span style='color: red;'>{}</span>", "En proceso")
+            return format_html("<span style='background-color: #FOB203; color: #000;'>{}</span>", "En proceso")
         
 class Respuesta(models.Model):
     consulta = models.ForeignKey(Consulta, on_delete=models.CASCADE, related_name='respuestas')
