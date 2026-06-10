@@ -1,3 +1,4 @@
 Django==5.1.5
 django-allauth==65.3.1
+django-simple-captcha==0.6.3
 Pillow==11.1.0

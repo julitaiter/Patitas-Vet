@@ -39,8 +39,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Librerías de terceros
+    'captcha',
+
     # App propia
     'app',
+    'contacto.apps.ContactoConfig',
 
     # Allauth
     'allauth',
