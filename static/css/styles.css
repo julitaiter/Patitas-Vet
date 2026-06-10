@@ -173,4 +173,53 @@ body {
   background-color: #198754;
 }
 
+/* line 165, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.logout-icon,
+.auth-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: rgba(25, 135, 84, 0.12);
+  color: #198754;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+}
+
+/* line 178, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.auth-help {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+/* line 183, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.card form input[type="text"],
+.card form input[type="email"],
+.card form input[type="password"] {
+  display: block;
+  width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.75rem;
+}
+
+/* line 196, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.card form input[type="text"]:focus,
+.card form input[type="email"]:focus,
+.card form input[type="password"]:focus {
+  border-color: #198754;
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.25);
+}
+
+/* line 203, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/styles.scss */
+.card form input[type="checkbox"] {
+  margin-right: 0.5rem;
+}
+
 /*# sourceMappingURL=styles.css.map */
