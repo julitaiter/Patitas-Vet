@@ -1,0 +1,12 @@
+.auth-icon,
+.logout-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background-color: rgba($color-principal, 0.12);
+    color: $color-principal;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}

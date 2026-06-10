@@ -1,0 +1,9 @@
+footer {
+    a {
+        transition: opacity $transicion-base;
+
+        &:hover {
+            opacity: 0.8;
+        }
+    }
+}

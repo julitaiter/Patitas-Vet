@@ -1,0 +1,43 @@
+.form-control,
+.form-select {
+    border-radius: 0.75rem;
+
+    &:focus {
+        border-color: $color-principal;
+        box-shadow: 0 0 0 0.25rem rgba($color-principal, 0.25);
+    }
+}
+
+.form-error,
+.errorlist {
+    margin-top: 0.25rem;
+    margin-bottom: 0;
+    padding-left: 0;
+    color: #dc3545;
+    font-size: 0.875rem;
+    list-style: none;
+}
+
+.card form input[type="text"],
+.card form input[type="email"],
+.card form input[type="password"] {
+    display: block;
+    width: 100%;
+    padding: 0.375rem 0.75rem;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: $color-texto;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.75rem;
+
+    &:focus {
+        border-color: $color-principal;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba($color-principal, 0.25);
+    }
+}
+
+.card form input[type="checkbox"] {
+    margin-right: 0.5rem;
+}

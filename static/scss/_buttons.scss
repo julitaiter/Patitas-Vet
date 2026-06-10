@@ -1,0 +1,24 @@
+.btn-success {
+    background-color: $color-principal;
+    border-color: $color-principal;
+
+    &:hover,
+    &:focus {
+        background-color: $color-principal-oscuro;
+        border-color: $color-principal-oscuro;
+    }
+}
+
+.btn-primary {
+    background-color: $color-secundario;
+    border-color: $color-secundario;
+    color: $color-texto;
+    font-weight: 600;
+
+    &:hover,
+    &:focus {
+        background-color: darken($color-secundario, 10%);
+        border-color: darken($color-secundario, 10%);
+        color: $color-texto;
+    }
+}

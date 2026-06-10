@@ -1,0 +1,24 @@
+.catalogo-section {
+    margin-bottom: 3rem;
+}
+
+.catalogo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.catalogo-precio {
+    color: $color-principal;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+@media (max-width: 768px) {
+    .catalogo-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
