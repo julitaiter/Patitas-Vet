@@ -8,6 +8,11 @@ class ContactoView(FormView):
     form_class = ConsultaForm
     success_url = '/contacto/mensaje_enviado/'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def form_valid(self, form):
         # Guardar la consulta en la base de datos
         form.save()
