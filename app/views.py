@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import ProductoForm, ServicioForm, TurnoForm
+from .forms import PerfilForm, ProductoForm, ServicioForm, TurnoForm
 from .models import Categoria, Producto, Servicio, Turno
 
 
@@ -195,4 +195,35 @@ def mis_turnos(request):
 
     return render(request, "turnos/mis_turnos.html", {
         "turnos": turnos,
+    })
+
+
+@login_required
+def mi_perfil(request):
+    turnos_recientes = (
+        Turno.objects
+        .select_related("servicio")
+        .filter(usuario=request.user)
+        .order_by("-fecha", "-hora")[:3]
+    )
+
+    return render(request, "account/mi_perfil.html", {
+        "turnos_recientes": turnos_recientes,
+    })
+
+
+@login_required
+def editar_perfil(request):
+    if request.method == "POST":
+        form = PerfilForm(request.POST, instance=request.user)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil actualizado correctamente.")
+            return redirect("mi_perfil")
+    else:
+        form = PerfilForm(instance=request.user)
+
+    return render(request, "account/editar_perfil.html", {
+        "form": form,
     })

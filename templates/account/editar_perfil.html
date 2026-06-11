@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Editar perfil | Patitas Vet{% endblock %}
+
+{% block content %}
+
+<section class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <div class="text-center mb-4">
+                        <div class="profile-avatar mx-auto mb-3">
+                            {{ user.username|first|upper }}
+                        </div>
+
+                        <h1 class="h3 mb-2">Editar perfil</h1>
+
+                        <p class="text-muted mb-0">
+                            Actualizá tus datos personales.
+                        </p>
+                    </div>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+
+                            {{ field }}
+
+                            {% if field.help_text %}
+                            <div class="form-text">{{ field.help_text }}</div>
+                            {% endif %}
+
+                            {% for error in field.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+
+                        <div class="alert alert-light border small">
+                            El email de la cuenta se gestiona desde la sección de correos para mantener la verificación
+                            de allauth.
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="submit" class="btn btn-success">
+                                Guardar cambios
+                            </button>
+
+                            <a href="{% url 'mi_perfil' %}" class="btn btn-outline-secondary">
+                                Cancelar
+                            </a>
+
+                            <a href="{% url 'account_email' %}" class="btn btn-outline-success">
+                                Gestionar email
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

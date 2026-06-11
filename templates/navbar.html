@@ -56,11 +56,9 @@
                             </a>
                         </li>
 
-                        <li>
-                            <a class="dropdown-item" href="#">
-                                Mi perfil
-                            </a>
-                        </li>
+                        <a class="dropdown-item" href="{% url 'mi_perfil' %}">
+                            Mi perfil
+                        </a>
 
                         {% if user.is_staff %}
                         <li>

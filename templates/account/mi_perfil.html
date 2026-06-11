@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Mi perfil | Patitas Vet{% endblock %}
+
+{% block content %}
+
+<section class="container my-5">
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body text-center p-4">
+                    <div class="profile-avatar mx-auto mb-3">
+                        {{ user.username|first|upper }}
+                    </div>
+
+                    <h1 class="h4 mb-1">
+                        {{ user.username }}
+                    </h1>
+
+                    {% if user.email %}
+                    <p class="text-muted mb-3">
+                        {{ user.email }}
+                    </p>
+                    {% else %}
+                    <p class="text-muted mb-3">
+                        Sin email cargado
+                    </p>
+                    {% endif %}
+
+                    {% if user.is_staff %}
+                    <span class="badge bg-success">
+                        Staff
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary">
+                        Cliente
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-4">
+                        Datos de la cuenta
+                    </h2>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Usuario</p>
+                            <p class="fw-semibold mb-0">{{ user.username }}</p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Email</p>
+                            <p class="fw-semibold mb-0">
+                                {% if user.email %}
+                                {{ user.email }}
+                                {% else %}
+                                No informado
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Nombre</p>
+                            <p class="fw-semibold mb-0">
+                                {% if user.first_name %}
+                                {{ user.first_name }}
+                                {% else %}
+                                No informado
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Apellido</p>
+                            <p class="fw-semibold mb-0">
+                                {% if user.last_name %}
+                                {{ user.last_name }}
+                                {% else %}
+                                No informado
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Fecha de registro</p>
+                            <p class="fw-semibold mb-0">
+                                {{ user.date_joined|date:"d/m/Y" }}
+                            </p>
+                        </div>
+
+                        <div class="col-md-6">
+                            <p class="text-muted mb-1">Último acceso</p>
+                            <p class="fw-semibold mb-0">
+                                {% if user.last_login %}
+                                {{ user.last_login|date:"d/m/Y H:i" }}
+                                {% else %}
+                                Sin registros
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <a href="{% url 'editar_perfil' %}" class="btn btn-outline-success">
+                            Editar perfil
+                        </a>
+
+                        <a href="{% url 'account_email' %}" class="btn btn-outline-secondary">
+                            Gestionar email
+                        </a>
+
+                        <a href="{% url 'account_change_password' %}" class="btn btn-outline-secondary">
+                            Cambiar contraseña
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-center gap-3 mb-3">
+                        <h2 class="h5 mb-0">
+                            Turnos recientes
+                        </h2>
+
+                        <a href="{% url 'mis_turnos' %}" class="btn btn-sm btn-outline-success">
+                            Ver todos
+                        </a>
+                    </div>
+
+                    {% if turnos_recientes %}
+                    <div class="list-group list-group-flush">
+                        {% for turno in turnos_recientes %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <p class="fw-semibold mb-1">
+                                        {{ turno.servicio.nombre }}
+                                    </p>
+
+                                    <p class="text-muted small mb-0">
+                                        {{ turno.fecha|date:"d/m/Y" }} - {{ turno.hora|time:"H:i" }}
+                                    </p>
+
+                                    {% if turno.mascota %}
+                                    <p class="text-muted small mb-0">
+                                        Mascota: {{ turno.mascota }}
+                                    </p>
+                                    {% endif %}
+                                </div>
+
+                                <span class="badge bg-secondary">
+                                    {{ turno.get_estado_display }}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted mb-3">
+                        Todavía no solicitaste turnos.
+                    </p>
+
+                    <a href="{% url 'listar_catalogo' %}" class="btn btn-success">
+                        Ver servicios
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

@@ -3,6 +3,28 @@ from django.forms import ModelForm
 
 from .models import Servicio, Producto, Turno
 
+from django import forms
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
+
+
+class PerfilForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["username", "first_name", "last_name"]
+        labels = {
+            "username": "Usuario",
+            "first_name": "Nombre",
+            "last_name": "Apellido",
+        }
+        widgets = {
+            "username": forms.TextInput(attrs={"class": "form-control"}),
+            "first_name": forms.TextInput(attrs={"class": "form-control"}),
+            "last_name": forms.TextInput(attrs={"class": "form-control"}),
+        }
+
 
 class BootstrapFormMixin:
     def aplicar_clases_bootstrap(self):
