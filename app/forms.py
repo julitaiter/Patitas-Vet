@@ -11,7 +11,20 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
-class PerfilForm(forms.ModelForm):
+class BootstrapFormMixin:
+    def aplicar_clases_bootstrap(self):
+        for field in self.fields.values():
+            widget = field.widget
+
+            if isinstance(widget, forms.CheckboxInput):
+                widget.attrs.setdefault("class", "form-check-input")
+            elif isinstance(widget, forms.Select):
+                widget.attrs.setdefault("class", "form-select")
+            else:
+                widget.attrs.setdefault("class", "form-control")
+
+
+class PerfilForm(BootstrapFormMixin, ModelForm):
     class Meta:
         model = User
         fields = ["username", "first_name", "last_name"]
@@ -26,18 +39,9 @@ class PerfilForm(forms.ModelForm):
             "last_name": forms.TextInput(attrs={"class": "form-control"}),
         }
 
-
-class BootstrapFormMixin:
-    def aplicar_clases_bootstrap(self):
-        for field in self.fields.values():
-            widget = field.widget
-
-            if isinstance(widget, forms.CheckboxInput):
-                widget.attrs.setdefault("class", "form-check-input")
-            elif isinstance(widget, forms.Select):
-                widget.attrs.setdefault("class", "form-select")
-            else:
-                widget.attrs.setdefault("class", "form-control")
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.aplicar_clases_bootstrap()
 
 
 class ItemCatalogoForm(BootstrapFormMixin, ModelForm):
@@ -73,7 +77,7 @@ class ProductoForm(ItemCatalogoForm):
         fields = ItemCatalogoForm.Meta.fields + ["stock"]
 
 
-class TurnoForm(forms.ModelForm):
+class TurnoForm(BootstrapFormMixin, ModelForm):
     class Meta:
         model = Turno
         fields = ["fecha", "hora", "mascota", "observaciones"]
@@ -98,7 +102,7 @@ class TurnoForm(forms.ModelForm):
         self.aplicar_clases_bootstrap()
 
 
-class TurnoEmpleadoForm(forms.ModelForm):
+class TurnoEmpleadoForm(BootstrapFormMixin, ModelForm):
     class Meta:
         model = Turno
         fields = ["servicio", "fecha", "hora",
