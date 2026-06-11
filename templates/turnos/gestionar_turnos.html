@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block title %}Gestor de turnos | Patitas Vet{% endblock %}
+
+{% block content %}
+
+<section class="container my-5">
+    <div class="d-flex justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="mb-1">Gestor de turnos</h1>
+            <p class="text-muted mb-0">
+                Administrá las solicitudes de turnos de los clientes.
+            </p>
+        </div>
+    </div>
+
+    <form method="get" class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Buscar</label>
+                    <input type="text" name="q" class="form-control" placeholder="Cliente, mascota o servicio"
+                        value="{{ query }}">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Fecha</label>
+                    <input type="date" name="fecha" class="form-control" value="{{ fecha }}">
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Servicio</label>
+                    <select name="servicio" class="form-select">
+                        <option value="">Todos</option>
+
+                        {% for servicio in servicios %}
+                        <option value="{{ servicio.id }}" {% if servicio_id == servicio.id %}selected{% endif %}>
+                            {{ servicio.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label class="form-label">Estado</label>
+                    <select name="estado" class="form-select">
+                        <option value="">Todos</option>
+
+                        {% for value, label in estados %}
+                        <option value="{{ value }}" {% if estado == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-12 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-success">
+                        Filtrar
+                    </button>
+
+                    <a href="{% url 'gestionar_turnos' %}" class="btn btn-outline-secondary">
+                        Limpiar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    {% if turnos %}
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Servicio</th>
+                        <th>Cliente</th>
+                        <th>Mascota</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for turno in turnos %}
+                    <tr>
+                        <td>{{ turno.fecha|date:"d/m/Y" }}</td>
+                        <td>{{ turno.hora|time:"H:i" }}</td>
+                        <td>
+                            <span class="fw-semibold">
+                                {{ turno.servicio.nombre }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="d-block">
+                                {{ turno.usuario.username }}
+                            </span>
+
+                            {% if turno.usuario.email %}
+                            <span class="text-muted small">
+                                {{ turno.usuario.email }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ turno.mascota }}</td>
+                        <td>
+                            {% if turno.estado == "pendiente" %}
+                            <span class="badge bg-warning text-dark">
+                                {{ turno.get_estado_display }}
+                            </span>
+                            {% elif turno.estado == "confirmado" %}
+                            <span class="badge bg-success">
+                                {{ turno.get_estado_display }}
+                            </span>
+                            {% elif turno.estado == "cancelado" %}
+                            <span class="badge bg-danger">
+                                {{ turno.get_estado_display }}
+                            </span>
+                            {% else %}
+                            <span class="badge bg-secondary">
+                                {{ turno.get_estado_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex justify-content-end gap-2 turno-actions">
+                                <a href="{% url 'editar_turno_empleado' pk=turno.pk %}"
+                                    class="btn btn-sm btn-outline-primary" title="Editar turno"
+                                    aria-label="Editar turno">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+
+                                {% if turno.estado != "confirmado" %}
+                                <form method="post"
+                                    action="{% url 'cambiar_estado_turno' pk=turno.pk estado='confirmado' %}"
+                                    class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-success" title="Confirmar turno"
+                                        aria-label="Confirmar turno">
+                                        <i class="bi bi-check-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                {% if turno.estado != "realizado" %}
+                                <form method="post"
+                                    action="{% url 'cambiar_estado_turno' pk=turno.pk estado='realizado' %}"
+                                    class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary"
+                                        title="Marcar como realizado" aria-label="Marcar como realizado">
+                                        <i class="bi bi-check2-square"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+
+                                {% if turno.estado != "cancelado" %}
+                                <form method="post"
+                                    action="{% url 'cambiar_estado_turno' pk=turno.pk estado='cancelado' %}"
+                                    class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Cancelar turno"
+                                        aria-label="Cancelar turno">
+                                        <i class="bi bi-x-circle"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+
+                    {% if turno.observaciones %}
+                    <tr class="table-light">
+                        <td colspan="7">
+                            <span class="small text-muted">
+                                Observaciones:
+                            </span>
+                            <span class="small">
+                                {{ turno.observaciones }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card shadow-sm border-0">
+        <div class="card-body text-center p-5">
+            <h2 class="h5">No hay turnos</h2>
+            <p class="text-muted mb-0">
+                No se encontraron turnos con los filtros seleccionados.
+            </p>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+{% endblock %}

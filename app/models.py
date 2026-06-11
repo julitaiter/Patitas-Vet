@@ -67,11 +67,13 @@ class Turno(BasicModel):
     ESTADO_PENDIENTE = "pendiente"
     ESTADO_CONFIRMADO = "confirmado"
     ESTADO_CANCELADO = "cancelado"
+    ESTADO_REALIZADO = "realizado"
 
     ESTADOS = [
         (ESTADO_PENDIENTE, "Pendiente"),
         (ESTADO_CONFIRMADO, "Confirmado"),
         (ESTADO_CANCELADO, "Cancelado"),
+        (ESTADO_REALIZADO, "Realizado"),
     ]
 
     usuario = models.ForeignKey(
@@ -87,7 +89,7 @@ class Turno(BasicModel):
     class Meta:
         verbose_name = "turno"
         verbose_name_plural = "turnos"
-        ordering = ["-fecha", "-hora"]
+        ordering = ["fecha", "hora"]
         constraints = [
             models.UniqueConstraint(
                 fields=["servicio", "fecha", "hora"],

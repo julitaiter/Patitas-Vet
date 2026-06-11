@@ -3,8 +3,9 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_POST
 
-from .forms import PerfilForm, ProductoForm, ServicioForm, TurnoForm
+from .forms import PerfilForm, ProductoForm, ServicioForm, TurnoEmpleadoForm, TurnoForm
 from .models import Categoria, Producto, Servicio, Turno
 
 
@@ -196,6 +197,90 @@ def mis_turnos(request):
     return render(request, "turnos/mis_turnos.html", {
         "turnos": turnos,
     })
+
+
+@staff_member_required
+def gestionar_turnos(request):
+    fecha = request.GET.get("fecha", "").strip()
+    estado = request.GET.get("estado", "").strip()
+    servicio_id = request.GET.get("servicio", "").strip()
+    query = request.GET.get("q", "").strip()
+
+    turnos = Turno.objects.select_related(
+        "usuario",
+        "servicio",
+        "servicio__categoria",
+    )
+
+    servicios = Servicio.objects.filter(activo=True).order_by("nombre")
+
+    if fecha:
+        turnos = turnos.filter(fecha=fecha)
+
+    if estado:
+        turnos = turnos.filter(estado=estado)
+
+    if servicio_id.isdigit():
+        turnos = turnos.filter(servicio_id=int(servicio_id))
+
+    if query:
+        turnos = turnos.filter(
+            Q(usuario__username__icontains=query)
+            | Q(usuario__email__icontains=query)
+            | Q(mascota__icontains=query)
+            | Q(servicio__nombre__icontains=query)
+        )
+
+    turnos = turnos.order_by("fecha", "hora")
+
+    return render(request, "turnos/gestionar_turnos.html", {
+        "turnos": turnos,
+        "servicios": servicios,
+        "estados": Turno.ESTADOS,
+        "fecha": fecha,
+        "estado": estado,
+        "servicio_id": int(servicio_id) if servicio_id.isdigit() else None,
+        "query": query,
+    })
+
+
+@staff_member_required
+def editar_turno_empleado(request, pk):
+    turno = get_object_or_404(Turno, pk=pk)
+
+    if request.method == "POST":
+        form = TurnoEmpleadoForm(request.POST, instance=turno)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Turno actualizado correctamente.")
+            return redirect("gestionar_turnos")
+    else:
+        form = TurnoEmpleadoForm(instance=turno)
+
+    return render(request, "turnos/editar_turno_empleado.html", {
+        "form": form,
+        "turno": turno,
+    })
+
+
+@staff_member_required
+@require_POST
+def cambiar_estado_turno(request, pk, estado):
+    turno = get_object_or_404(Turno, pk=pk)
+
+    estados_validos = dict(Turno.ESTADOS)
+
+    if estado not in estados_validos:
+        messages.error(request, "Estado inválido.")
+        return redirect("gestionar_turnos")
+
+    turno.estado = estado
+    turno.save(update_fields=["estado", "updated_at"])
+
+    messages.success(
+        request, f"Turno marcado como {estados_validos[estado].lower()}.")
+    return redirect("gestionar_turnos")
 
 
 @login_required
