@@ -42,6 +42,19 @@
                 </div>
 
                 <div class="col-md-3">
+                    <label class="form-label">Sala</label>
+                    <select name="sala" class="form-select">
+                        <option value="">Todas</option>
+
+                        {% for sala in salas %}
+                        <option value="{{ sala.id }}" {% if sala_id == sala.id %}selected{% endif %}>
+                            {{ sala.nombre }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="col-md-3">
                     <label class="form-label">Estado</label>
                     <select name="estado" class="form-select">
                         <option value="">Todos</option>
@@ -75,6 +88,7 @@
                     <tr>
                         <th>Fecha</th>
                         <th>Hora</th>
+                        <th>Sala</th>
                         <th>Servicio</th>
                         <th>Cliente</th>
                         <th>Mascota</th>
@@ -88,6 +102,7 @@
                     <tr>
                         <td>{{ turno.fecha|date:"d/m/Y" }}</td>
                         <td>{{ turno.hora|time:"H:i" }}</td>
+                        <td>{{ turno.sala.nombre }}</td>
                         <td>
                             <span class="fw-semibold">
                                 {{ turno.servicio.nombre }}
@@ -106,15 +121,15 @@
                         </td>
                         <td>{{ turno.mascota }}</td>
                         <td>
-                            {% if turno.estado == "pendiente" %}
+                            {% if turno.estado  ==  "pendiente" %}
                             <span class="badge bg-warning text-dark">
                                 {{ turno.get_estado_display }}
                             </span>
-                            {% elif turno.estado == "confirmado" %}
+                            {% elif turno.estado  ==  "confirmado" %}
                             <span class="badge bg-success">
                                 {{ turno.get_estado_display }}
                             </span>
-                            {% elif turno.estado == "cancelado" %}
+                            {% elif turno.estado  ==  "cancelado" %}
                             <span class="badge bg-danger">
                                 {{ turno.get_estado_display }}
                             </span>
@@ -124,6 +139,7 @@
                             </span>
                             {% endif %}
                         </td>
+
                         <td class="text-end">
                             <div class="d-flex justify-content-end gap-2 turno-actions">
                                 <a href="{% url 'editar_turno_empleado' pk=turno.pk %}"
@@ -173,7 +189,7 @@
 
                     {% if turno.observaciones %}
                     <tr class="table-light">
-                        <td colspan="7">
+                        <td colspan="8">
                             <span class="small text-muted">
                                 Observaciones:
                             </span>
