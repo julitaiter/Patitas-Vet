@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block title %}Mis turnos | Patitas Vet{% endblock %}
 
@@ -25,12 +25,26 @@
                 <tr>
                     <td>{{ turno.servicio.nombre }}</td>
                     <td>{{ turno.mascota }}</td>
-                    <td>{{ turno.fecha }}</td>
-                    <td>{{ turno.hora }}</td>
+                    <td>{{ turno.fecha|date:"d/m/Y" }}</td>
+                    <td>{{ turno.hora|time:"H:i" }}</td>
                     <td>
+                        {% if turno.estado == "pendiente" %}
+                        <span class="badge bg-warning text-dark">
+                            {{ turno.get_estado_display }}
+                        </span>
+                        {% elif turno.estado == "confirmado" %}
+                        <span class="badge bg-success">
+                            {{ turno.get_estado_display }}
+                        </span>
+                        {% elif turno.estado == "cancelado" %}
+                        <span class="badge bg-danger">
+                            {{ turno.get_estado_display }}
+                        </span>
+                        {% else %}
                         <span class="badge bg-secondary">
                             {{ turno.get_estado_display }}
                         </span>
+                        {% endif %}
                     </td>
                 </tr>
                 {% endfor %}
@@ -41,6 +55,10 @@
     <p class="text-muted">
         Todavía no solicitaste turnos.
     </p>
+
+    <a href="{% url 'listar_catalogo' %}" class="btn btn-success">
+        Ver servicios
+    </a>
     {% endif %}
 </section>
 

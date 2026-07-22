@@ -1,7 +1,5 @@
 from django.conf import settings
 from django.db import models
-from django.urls import reverse
-from django.utils import timezone
 
 
 def catalogo_imagen_upload_to(instance, filename):
@@ -29,6 +27,20 @@ class Categoria(BasicModel):
         return self.nombre
 
 
+class Sala(BasicModel):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField(blank=True)
+    activa = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "sala"
+        verbose_name_plural = "salas"
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return self.nombre
+
+
 class ItemCatalogo(BasicModel):
     nombre = models.CharField(max_length=100)
     descripcion = models.TextField()
@@ -48,6 +60,13 @@ class ItemCatalogo(BasicModel):
 
 
 class Servicio(ItemCatalogo):
+    sala = models.ForeignKey(
+        Sala,
+        on_delete=models.PROTECT,
+        related_name="servicios",
+        blank=True,
+        null=True
+    )
     duracion_minutos = models.PositiveIntegerField(default=30)
 
     class Meta:
@@ -61,6 +80,51 @@ class Producto(ItemCatalogo):
     class Meta:
         verbose_name = "producto"
         verbose_name_plural = "productos"
+
+
+class DisponibilidadTurno(BasicModel):
+    DIA_LUNES = 0
+    DIA_MARTES = 1
+    DIA_MIERCOLES = 2
+    DIA_JUEVES = 3
+    DIA_VIERNES = 4
+    DIA_SABADO = 5
+    DIA_DOMINGO = 6
+
+    DIAS_SEMANA = [
+        (DIA_LUNES, "Lunes"),
+        (DIA_MARTES, "Martes"),
+        (DIA_MIERCOLES, "Miércoles"),
+        (DIA_JUEVES, "Jueves"),
+        (DIA_VIERNES, "Viernes"),
+        (DIA_SABADO, "Sábado"),
+        (DIA_DOMINGO, "Domingo"),
+    ]
+
+    sala = models.ForeignKey(
+        Sala,
+        on_delete=models.CASCADE,
+        related_name="disponibilidades",
+    )
+    dia_semana = models.PositiveSmallIntegerField(choices=DIAS_SEMANA)
+    hora_inicio = models.TimeField()
+    hora_fin = models.TimeField()
+    intervalo_minutos = models.PositiveIntegerField(default=30)
+    activa = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = "disponibilidad de turno"
+        verbose_name_plural = "disponibilidades de turnos"
+        ordering = ["sala", "dia_semana", "hora_inicio"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["sala", "dia_semana", "hora_inicio", "hora_fin"],
+                name="disponibilidad_unica_por_sala_dia_horario",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.sala} - {self.get_dia_semana_display()} {self.hora_inicio} a {self.hora_fin}"
 
 
 class Turno(BasicModel):
@@ -79,12 +143,16 @@ class Turno(BasicModel):
     usuario = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     servicio = models.ForeignKey(Servicio, on_delete=models.PROTECT)
+    sala = models.ForeignKey(Sala, on_delete=models.PROTECT, related_name="turnos", blank=True, null=True)
     fecha = models.DateField()
     hora = models.TimeField()
     mascota = models.CharField(max_length=100)
     observaciones = models.TextField(blank=True)
     estado = models.CharField(
-        max_length=20, choices=ESTADOS, default=ESTADO_PENDIENTE)
+        max_length=20,
+        choices=ESTADOS,
+        default=ESTADO_PENDIENTE,
+    )
 
     class Meta:
         verbose_name = "turno"
@@ -92,8 +160,8 @@ class Turno(BasicModel):
         ordering = ["fecha", "hora"]
         constraints = [
             models.UniqueConstraint(
-                fields=["servicio", "fecha", "hora"],
-                name="turno_unico_por_servicio_fecha_hora",
+                fields=["sala", "fecha", "hora"],
+                name="turno_unico_por_sala_fecha_hora",
             )
         ]
 

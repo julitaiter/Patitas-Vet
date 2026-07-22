@@ -15,6 +15,10 @@
                         Cliente: <strong>{{ turno.usuario.username }}</strong>
                     </p>
 
+                    <p class="text-muted mb-4">
+                        Sala actual: <strong>{{ turno.sala.nombre }}</strong>
+                    </p>
+
                     <form method="post" novalidate>
                         {% csrf_token %}
 
@@ -39,6 +43,10 @@
                             {% endfor %}
                         </div>
                         {% endfor %}
+
+                        <div class="alert alert-light border small">
+                            La sala se asigna automáticamente según el servicio seleccionado.
+                        </div>
 
                         <div class="d-flex flex-wrap gap-2">
                             <button type="submit" class="btn btn-success">

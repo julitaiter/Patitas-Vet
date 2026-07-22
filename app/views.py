@@ -1,18 +1,28 @@
+from datetime import datetime
+
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 
-from .forms import PerfilForm, ProductoForm, ServicioForm, TurnoEmpleadoForm, TurnoForm
-from .models import Categoria, Producto, Servicio, Turno
+from .forms import (
+    PerfilForm,
+    ProductoForm,
+    ServicioForm,
+    TurnoEmpleadoForm,
+    TurnoForm,
+)
+from .models import Categoria, Producto, Sala, Servicio, Turno
+from .services.turnos import obtener_horarios_disponibles
 
 
 def index(request):
     servicios_destacados = (
         Servicio.objects
-        .select_related("categoria")
+        .select_related("categoria", "sala")
         .filter(activo=True, destacado=True)
         .order_by("nombre")[:3]
     )
@@ -20,7 +30,7 @@ def index(request):
     if not servicios_destacados:
         servicios_destacados = (
             Servicio.objects
-            .select_related("categoria")
+            .select_related("categoria", "sala")
             .filter(activo=True)
             .order_by("nombre")[:3]
         )
@@ -30,13 +40,44 @@ def index(request):
     })
 
 
+@login_required
+def mi_perfil(request):
+    turnos_recientes = (
+        Turno.objects
+        .select_related("servicio", "sala")
+        .filter(usuario=request.user)
+        .order_by("-fecha", "-hora")[:3]
+    )
+
+    return render(request, "account/mi_perfil.html", {
+        "turnos_recientes": turnos_recientes,
+    })
+
+
+@login_required
+def editar_perfil(request):
+    if request.method == "POST":
+        form = PerfilForm(request.POST, instance=request.user)
+
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Perfil actualizado correctamente.")
+            return redirect("mi_perfil")
+    else:
+        form = PerfilForm(instance=request.user)
+
+    return render(request, "account/editar_perfil.html", {
+        "form": form,
+    })
+
+
 def listar_catalogo(request):
     query = request.GET.get("q", "").strip()
     categoria_id = request.GET.get("categoria", "").strip()
     categoria_id_int = int(categoria_id) if categoria_id.isdigit() else None
 
     servicios = Servicio.objects.select_related(
-        "categoria").filter(activo=True)
+        "categoria", "sala").filter(activo=True)
     productos = Producto.objects.select_related(
         "categoria").filter(activo=True)
     categorias = Categoria.objects.filter(activa=True).order_by("nombre")
@@ -163,21 +204,26 @@ def eliminar_item(request, model, pk):
 
 @login_required
 def solicitar_turno(request, servicio_pk):
-    servicio = get_object_or_404(Servicio, pk=servicio_pk, activo=True)
+    servicio = get_object_or_404(
+        Servicio.objects.select_related("sala"),
+        pk=servicio_pk,
+        activo=True,
+    )
 
     if request.method == "POST":
-        form = TurnoForm(request.POST)
+        form = TurnoForm(request.POST, servicio=servicio)
 
         if form.is_valid():
             turno = form.save(commit=False)
             turno.usuario = request.user
             turno.servicio = servicio
+            turno.sala = servicio.sala
             turno.save()
 
             messages.success(request, "Turno solicitado correctamente.")
             return redirect("mis_turnos")
     else:
-        form = TurnoForm()
+        form = TurnoForm(servicio=servicio)
 
     return render(request, "turnos/nuevo_turno.html", {
         "form": form,
@@ -189,7 +235,7 @@ def solicitar_turno(request, servicio_pk):
 def mis_turnos(request):
     turnos = (
         Turno.objects
-        .select_related("servicio", "servicio__categoria")
+        .select_related("servicio", "sala", "servicio__categoria")
         .filter(usuario=request.user)
         .order_by("-fecha", "-hora")
     )
@@ -199,20 +245,53 @@ def mis_turnos(request):
     })
 
 
+@login_required
+def horarios_disponibles(request):
+    servicio_id = request.GET.get("servicio")
+    fecha_str = request.GET.get("fecha")
+
+    if not servicio_id or not fecha_str:
+        return JsonResponse({"horarios": []})
+
+    try:
+        servicio = Servicio.objects.select_related("sala").get(
+            pk=servicio_id,
+            activo=True,
+        )
+        fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
+    except (Servicio.DoesNotExist, ValueError):
+        return JsonResponse({"horarios": []})
+
+    horarios = obtener_horarios_disponibles(servicio.sala, fecha)
+
+    return JsonResponse({
+        "horarios": [
+            {
+                "value": hora.strftime("%H:%M"),
+                "label": hora.strftime("%H:%M"),
+            }
+            for hora in horarios
+        ]
+    })
+
+
 @staff_member_required
 def gestionar_turnos(request):
     fecha = request.GET.get("fecha", "").strip()
     estado = request.GET.get("estado", "").strip()
     servicio_id = request.GET.get("servicio", "").strip()
+    sala_id = request.GET.get("sala", "").strip()
     query = request.GET.get("q", "").strip()
 
     turnos = Turno.objects.select_related(
         "usuario",
         "servicio",
         "servicio__categoria",
+        "sala",
     )
 
     servicios = Servicio.objects.filter(activo=True).order_by("nombre")
+    salas = Sala.objects.filter(activa=True).order_by("nombre")
 
     if fecha:
         turnos = turnos.filter(fecha=fecha)
@@ -223,23 +302,29 @@ def gestionar_turnos(request):
     if servicio_id.isdigit():
         turnos = turnos.filter(servicio_id=int(servicio_id))
 
+    if sala_id.isdigit():
+        turnos = turnos.filter(sala_id=int(sala_id))
+
     if query:
         turnos = turnos.filter(
             Q(usuario__username__icontains=query)
             | Q(usuario__email__icontains=query)
             | Q(mascota__icontains=query)
             | Q(servicio__nombre__icontains=query)
+            | Q(sala__nombre__icontains=query)
         )
 
-    turnos = turnos.order_by("fecha", "hora")
+    turnos = turnos.order_by("fecha", "hora", "sala__nombre")
 
     return render(request, "turnos/gestionar_turnos.html", {
         "turnos": turnos,
         "servicios": servicios,
+        "salas": salas,
         "estados": Turno.ESTADOS,
         "fecha": fecha,
         "estado": estado,
         "servicio_id": int(servicio_id) if servicio_id.isdigit() else None,
+        "sala_id": int(sala_id) if sala_id.isdigit() else None,
         "query": query,
     })
 
@@ -252,7 +337,10 @@ def editar_turno_empleado(request, pk):
         form = TurnoEmpleadoForm(request.POST, instance=turno)
 
         if form.is_valid():
-            form.save()
+            turno = form.save(commit=False)
+            turno.sala = turno.servicio.sala
+            turno.save()
+
             messages.success(request, "Turno actualizado correctamente.")
             return redirect("gestionar_turnos")
     else:
@@ -281,34 +369,3 @@ def cambiar_estado_turno(request, pk, estado):
     messages.success(
         request, f"Turno marcado como {estados_validos[estado].lower()}.")
     return redirect("gestionar_turnos")
-
-
-@login_required
-def mi_perfil(request):
-    turnos_recientes = (
-        Turno.objects
-        .select_related("servicio")
-        .filter(usuario=request.user)
-        .order_by("-fecha", "-hora")[:3]
-    )
-
-    return render(request, "account/mi_perfil.html", {
-        "turnos_recientes": turnos_recientes,
-    })
-
-
-@login_required
-def editar_perfil(request):
-    if request.method == "POST":
-        form = PerfilForm(request.POST, instance=request.user)
-
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Perfil actualizado correctamente.")
-            return redirect("mi_perfil")
-    else:
-        form = PerfilForm(instance=request.user)
-
-    return render(request, "account/editar_perfil.html", {
-        "form": form,
-    })

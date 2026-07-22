@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block title %}Solicitar turno | Patitas Vet{% endblock %}
 
@@ -7,8 +7,8 @@
 <section class="container my-5">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
-            <div class="card shadow-sm">
-                <div class="card-body">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
                     <h1 class="h3 mb-3">Solicitar turno</h1>
 
                     <p class="text-muted">
@@ -17,6 +17,12 @@
 
                     <form method="post" novalidate>
                         {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
 
                         {% for field in form %}
                         <div class="mb-3">
@@ -27,12 +33,14 @@
                             {{ field }}
 
                             {% for error in field.errors %}
-                            <div class="text-danger small">{{ error }}</div>
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
                             {% endfor %}
                         </div>
                         {% endfor %}
 
-                        <div class="d-flex gap-2">
+                        <div class="d-flex flex-wrap gap-2">
                             <button type="submit" class="btn btn-success">
                                 Solicitar turno
                             </button>
@@ -48,4 +56,58 @@
     </div>
 </section>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const fechaInput = document.getElementById("id_fecha");
+    const horaSelect = document.getElementById("id_hora");
+    const servicioId = "{{ servicio.id }}";
+
+    function limpiarHorarios(mensaje) {
+        horaSelect.innerHTML = "";
+
+        const option = document.createElement("option");
+        option.value = "";
+        option.textContent = mensaje;
+
+        horaSelect.appendChild(option);
+    }
+
+    async function cargarHorarios() {
+        const fecha = fechaInput.value;
+
+        if (!fecha) {
+            limpiarHorarios("Seleccioná una fecha");
+            return;
+        }
+
+        limpiarHorarios("Cargando horarios...");
+
+        const url = "{% url 'horarios_disponibles' %}" + `?servicio=${servicioId}&fecha=${fecha}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        horaSelect.innerHTML = "";
+
+        if (!data.horarios.length) {
+            limpiarHorarios("No hay horarios disponibles");
+            return;
+        }
+
+        const defaultOption = document.createElement("option");
+        defaultOption.value = "";
+        defaultOption.textContent = "Seleccioná un horario";
+        horaSelect.appendChild(defaultOption);
+
+        data.horarios.forEach((horario) => {
+            const option = document.createElement("option");
+            option.value = horario.value;
+            option.textContent = horario.label;
+            horaSelect.appendChild(option);
+        });
+    }
+
+    fechaInput.addEventListener("change", cargarHorarios);
+</script>
 {% endblock %}

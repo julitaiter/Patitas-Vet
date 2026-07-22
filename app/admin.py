@@ -2,38 +2,18 @@ from django.contrib import admin, messages
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import Categoria, Producto, Servicio, Turno
+from .models import (
+    Categoria,
+    DisponibilidadTurno,
+    Producto,
+    Sala,
+    Servicio,
+    Turno,
+)
 
 
 class BasicAdminMixin:
     readonly_fields = ["created_at", "updated_at"]
-
-    def actualizar_queryset(self, request, queryset, campos, mensaje_ok, mensaje_sin_cambios=None):
-        total = queryset.count()
-
-        if total == 0:
-            self.message_user(
-                request,
-                "No se seleccionó ningún elemento.",
-                level=messages.WARNING,
-            )
-            return
-
-        campos["updated_at"] = timezone.now()
-        actualizados = queryset.update(**campos)
-
-        if actualizados:
-            self.message_user(
-                request,
-                mensaje_ok.format(total=actualizados),
-                level=messages.SUCCESS,
-            )
-        elif mensaje_sin_cambios:
-            self.message_user(
-                request,
-                mensaje_sin_cambios,
-                level=messages.WARNING,
-            )
 
 
 class CatalogoAdminMixin(BasicAdminMixin):
@@ -104,10 +84,6 @@ class CatalogoAdminMixin(BasicAdminMixin):
             )
 
         return "-"
-
-    @admin.display(description="Precio", ordering="precio")
-    def precio_formateado(self, obj):
-        return f"$ {obj.precio}"
 
     @admin.display(description="Activo", boolean=True, ordering="activo")
     def activo_icono(self, obj):
@@ -299,16 +275,252 @@ class CategoriaAdmin(BasicAdminMixin, admin.ModelAdmin):
         )
 
 
+@admin.register(Sala)
+class SalaAdmin(BasicAdminMixin, admin.ModelAdmin):
+    list_display = [
+        "nombre",
+        "activa",
+        "created_at",
+    ]
+
+    list_filter = [
+        "activa",
+    ]
+
+    search_fields = [
+        "nombre",
+        "descripcion",
+    ]
+
+    list_editable = [
+        "activa",
+    ]
+
+    ordering = [
+        "nombre",
+    ]
+
+    actions = [
+        "activar_salas",
+        "desactivar_salas",
+    ]
+
+    fieldsets = (
+        (
+            "Datos de la sala",
+            {
+                "fields": (
+                    "nombre",
+                    "descripcion",
+                    "activa",
+                )
+            },
+        ),
+        (
+            "Auditoría",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                ),
+                "classes": (
+                    "collapse",
+                ),
+            },
+        ),
+    )
+
+    @admin.action(description="Activar salas seleccionadas")
+    def activar_salas(self, request, queryset):
+        queryset_a_actualizar = queryset.filter(activa=False)
+        total = queryset_a_actualizar.count()
+
+        if total == 0:
+            self.message_user(
+                request,
+                "No se modificó ninguna sala. Las seleccionadas ya estaban activas.",
+                level=messages.WARNING,
+            )
+            return
+
+        queryset_a_actualizar.update(activa=True, updated_at=timezone.now())
+
+        self.message_user(
+            request,
+            f"{total} sala(s) activada(s) correctamente.",
+            level=messages.SUCCESS,
+        )
+
+    @admin.action(description="Desactivar salas seleccionadas")
+    def desactivar_salas(self, request, queryset):
+        queryset_a_actualizar = queryset.filter(activa=True)
+        total = queryset_a_actualizar.count()
+
+        if total == 0:
+            self.message_user(
+                request,
+                "No se modificó ninguna sala. Las seleccionadas ya estaban inactivas.",
+                level=messages.WARNING,
+            )
+            return
+
+        queryset_a_actualizar.update(activa=False, updated_at=timezone.now())
+
+        self.message_user(
+            request,
+            f"{total} sala(s) desactivada(s) correctamente.",
+            level=messages.SUCCESS,
+        )
+
+
+@admin.register(DisponibilidadTurno)
+class DisponibilidadTurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
+    list_display = [
+        "sala",
+        "dia_semana",
+        "hora_inicio",
+        "hora_fin",
+        "intervalo_minutos",
+        "activa",
+    ]
+
+    list_filter = [
+        "sala",
+        "dia_semana",
+        "activa",
+    ]
+
+    search_fields = [
+        "sala__nombre",
+    ]
+
+    list_select_related = [
+        "sala",
+    ]
+
+    list_editable = [
+        "activa",
+    ]
+
+    ordering = [
+        "sala",
+        "dia_semana",
+        "hora_inicio",
+    ]
+
+    actions = [
+        "activar_disponibilidades",
+        "desactivar_disponibilidades",
+    ]
+
+    fieldsets = (
+        (
+            "Sala",
+            {
+                "fields": (
+                    "sala",
+                    "activa",
+                )
+            },
+        ),
+        (
+            "Día y horario",
+            {
+                "fields": (
+                    "dia_semana",
+                    "hora_inicio",
+                    "hora_fin",
+                    "intervalo_minutos",
+                )
+            },
+        ),
+        (
+            "Auditoría",
+            {
+                "fields": (
+                    "created_at",
+                    "updated_at",
+                ),
+                "classes": (
+                    "collapse",
+                ),
+            },
+        ),
+    )
+
+    @admin.action(description="Activar disponibilidades seleccionadas")
+    def activar_disponibilidades(self, request, queryset):
+        queryset_a_actualizar = queryset.filter(activa=False)
+        total = queryset_a_actualizar.count()
+
+        if total == 0:
+            self.message_user(
+                request,
+                "No se modificó ninguna disponibilidad. Las seleccionadas ya estaban activas.",
+                level=messages.WARNING,
+            )
+            return
+
+        queryset_a_actualizar.update(activa=True, updated_at=timezone.now())
+
+        self.message_user(
+            request,
+            f"{total} disponibilidad(es) activada(s) correctamente.",
+            level=messages.SUCCESS,
+        )
+
+    @admin.action(description="Desactivar disponibilidades seleccionadas")
+    def desactivar_disponibilidades(self, request, queryset):
+        queryset_a_actualizar = queryset.filter(activa=True)
+        total = queryset_a_actualizar.count()
+
+        if total == 0:
+            self.message_user(
+                request,
+                "No se modificó ninguna disponibilidad. Las seleccionadas ya estaban inactivas.",
+                level=messages.WARNING,
+            )
+            return
+
+        queryset_a_actualizar.update(activa=False, updated_at=timezone.now())
+
+        self.message_user(
+            request,
+            f"{total} disponibilidad(es) desactivada(s) correctamente.",
+            level=messages.SUCCESS,
+        )
+
+
 @admin.register(Servicio)
 class ServicioAdmin(CatalogoAdminMixin, admin.ModelAdmin):
     list_display = [
         "imagen_preview",
         "nombre",
         "categoria",
+        "sala",
         "precio",
         "duracion_minutos",
         "activo_icono",
         "destacado_icono",
+    ]
+
+    list_filter = [
+        "categoria",
+        "sala",
+        "activo",
+        "destacado",
+    ]
+
+    search_fields = [
+        "nombre",
+        "descripcion",
+        "categoria__nombre",
+        "sala__nombre",
+    ]
+
+    list_select_related = [
+        "categoria",
+        "sala",
     ]
 
     list_editable = [
@@ -324,6 +536,7 @@ class ServicioAdmin(CatalogoAdminMixin, admin.ModelAdmin):
                     "nombre",
                     "descripcion",
                     "categoria",
+                    "sala",
                     "precio",
                     "duracion_minutos",
                 )
@@ -446,6 +659,7 @@ class ProductoAdmin(CatalogoAdminMixin, admin.ModelAdmin):
 class TurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
     list_display = [
         "servicio",
+        "sala",
         "usuario",
         "mascota",
         "fecha",
@@ -457,6 +671,7 @@ class TurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
         "estado",
         "fecha",
         "servicio",
+        "sala",
     ]
 
     search_fields = [
@@ -464,10 +679,12 @@ class TurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
         "usuario__email",
         "mascota",
         "servicio__nombre",
+        "sala__nombre",
     ]
 
     list_select_related = [
         "servicio",
+        "sala",
         "usuario",
     ]
 
@@ -492,6 +709,7 @@ class TurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
                 "fields": (
                     "usuario",
                     "servicio",
+                    "sala",
                     "mascota",
                     "estado",
                 )
