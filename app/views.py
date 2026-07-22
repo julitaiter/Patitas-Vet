@@ -3,6 +3,7 @@ from datetime import datetime
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.db.models.deletion import ProtectedError
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -11,12 +12,14 @@ from django.views.decorators.http import require_GET, require_POST
 
 from .forms import (
     PerfilForm,
+    DisponibilidadTurnoForm,
     ProductoForm,
+    SalaForm,
     ServicioForm,
     TurnoEmpleadoForm,
     TurnoForm,
 )
-from .models import Categoria, Producto, Sala, Servicio, Turno
+from .models import Categoria, DisponibilidadTurno, Producto, Sala, Servicio, Turno
 from .services.turnos import obtener_horarios_disponibles
 
 
@@ -432,6 +435,157 @@ def gestionar_turnos(request):
         "servicio_id": int(servicio_id) if servicio_id.isdigit() else None,
         "sala_id": int(sala_id) if sala_id.isdigit() else None,
         "query": query,
+    })
+
+
+@staff_member_required
+def gestionar_salas(request):
+    return render(request, "turnos/gestionar_salas.html", {
+        **gestionar_salas_context(),
+        "abrir_modal_sala": request.GET.get("modal") == "nueva-sala",
+    })
+
+
+def gestionar_salas_context(sala_form=None, abrir_modal_sala=False):
+    salas = (
+        Sala.objects
+        .prefetch_related("disponibilidades")
+        .order_by("nombre")
+    )
+    return {
+        "salas": salas,
+        "sala_form": sala_form or SalaForm(),
+        "abrir_modal_sala": abrir_modal_sala,
+    }
+
+
+@staff_member_required
+def nueva_sala(request):
+    if request.method == "POST":
+        form = SalaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Sala creada correctamente.")
+            return redirect("gestionar_salas")
+    else:
+        form = SalaForm()
+
+    return render(
+        request,
+        "turnos/gestionar_salas.html",
+        gestionar_salas_context(form, abrir_modal_sala=True),
+    )
+
+
+@staff_member_required
+def editar_sala(request, pk):
+    sala = get_object_or_404(Sala, pk=pk)
+    if request.method == "POST":
+        form = SalaForm(request.POST, instance=sala)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Sala actualizada correctamente.")
+            return redirect("gestionar_salas")
+    else:
+        form = SalaForm(instance=sala)
+
+    return render(request, "turnos/form_gestion.html", {
+        "form": form,
+        "titulo": f"Editar sala: {sala.nombre}",
+        "submit": "Actualizar sala",
+        "cancel_url": reverse("gestionar_salas"),
+    })
+
+
+@staff_member_required
+def eliminar_sala(request, pk):
+    sala = get_object_or_404(Sala, pk=pk)
+    if request.method == "POST":
+        try:
+            sala.delete()
+        except ProtectedError:
+            messages.error(
+                request,
+                "No se puede eliminar la sala porque está vinculada a servicios o turnos. Podés desactivarla.",
+            )
+        else:
+            messages.success(request, "Sala eliminada correctamente.")
+        return redirect("gestionar_salas")
+
+    return render(request, "turnos/confirmar_eliminar_gestion.html", {
+        "obj": sala,
+        "tipo": "sala",
+        "cancel_url": reverse("gestionar_salas"),
+    })
+
+
+@staff_member_required
+def nueva_disponibilidad(request):
+    sala_id = request.GET.get("sala", "")
+    initial = {"sala": int(sala_id)} if sala_id.isdigit() else None
+
+    if request.method == "POST":
+        form = DisponibilidadTurnoForm(request.POST)
+        if form.is_valid():
+            disponibilidades = form.save_disponibilidades()
+            messages.success(
+                request,
+                f"Se crearon {len(disponibilidades)} disponibilidades correctamente.",
+            )
+            return redirect("gestionar_salas")
+    else:
+        form = DisponibilidadTurnoForm(initial=initial)
+
+    return render(request, "turnos/form_gestion.html", {
+        "form": form,
+        "titulo": "Nueva disponibilidad",
+        "submit": "Guardar disponibilidad",
+        "cancel_url": reverse("gestionar_salas"),
+    })
+
+
+@staff_member_required
+def editar_disponibilidad(request, pk):
+    disponibilidad = get_object_or_404(
+        DisponibilidadTurno.objects.select_related("sala"),
+        pk=pk,
+    )
+    if request.method == "POST":
+        form = DisponibilidadTurnoForm(request.POST, instance=disponibilidad)
+        if form.is_valid():
+            disponibilidades = form.save_disponibilidades()
+            adicionales = len(disponibilidades) - 1
+            mensaje = "Disponibilidad actualizada correctamente."
+            if adicionales:
+                mensaje += f" Se crearon {adicionales} disponibilidades adicionales."
+            messages.success(request, mensaje)
+            return redirect("gestionar_salas")
+    else:
+        form = DisponibilidadTurnoForm(instance=disponibilidad)
+
+    return render(request, "turnos/form_gestion.html", {
+        "form": form,
+        "titulo": f"Editar disponibilidad de {disponibilidad.sala.nombre}",
+        "submit": "Actualizar disponibilidad",
+        "cancel_url": reverse("gestionar_salas"),
+    })
+
+
+@staff_member_required
+def eliminar_disponibilidad(request, pk):
+    disponibilidad = get_object_or_404(
+        DisponibilidadTurno.objects.select_related("sala"),
+        pk=pk,
+    )
+    if request.method == "POST":
+        disponibilidad.delete()
+        messages.success(request, "Disponibilidad eliminada correctamente.")
+        return redirect("gestionar_salas")
+
+    return render(request, "turnos/confirmar_eliminar_gestion.html", {
+        "obj": disponibilidad,
+        "tipo": "disponibilidad",
+        "cancel_url": reverse("gestionar_salas"),
     })
 
 

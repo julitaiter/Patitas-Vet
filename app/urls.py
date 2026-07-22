@@ -27,4 +27,12 @@ urlpatterns = [
     path("empleado/turnos/", views.gestionar_turnos, name="gestionar_turnos"),
     path("empleado/turnos/<int:pk>/editar/", views.editar_turno_empleado, name="editar_turno_empleado"),
     path("empleado/turnos/<int:pk>/estado/<str:estado>/", views.cambiar_estado_turno, name="cambiar_estado_turno"),
+
+    path("empleado/salas/", views.gestionar_salas, name="gestionar_salas"),
+    path("empleado/salas/nueva/", views.nueva_sala, name="nueva_sala"),
+    path("empleado/salas/<int:pk>/editar/", views.editar_sala, name="editar_sala"),
+    path("empleado/salas/<int:pk>/eliminar/", views.eliminar_sala, name="eliminar_sala"),
+    path("empleado/disponibilidades/nueva/", views.nueva_disponibilidad, name="nueva_disponibilidad"),
+    path("empleado/disponibilidades/<int:pk>/editar/", views.editar_disponibilidad, name="editar_disponibilidad"),
+    path("empleado/disponibilidades/<int:pk>/eliminar/", views.eliminar_disponibilidad, name="eliminar_disponibilidad"),
 ]
