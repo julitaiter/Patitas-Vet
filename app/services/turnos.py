@@ -18,6 +18,9 @@ def generar_horarios(hora_inicio, hora_fin, intervalo_minutos):
 
 
 def obtener_horarios_disponibles(sala, fecha):
+    if sala is None or not sala.activa:
+        return []
+
     dia_semana = fecha.weekday()
 
     disponibilidades = DisponibilidadTurno.objects.filter(

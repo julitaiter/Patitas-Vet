@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ titulo }} | Patitas Vet{% endblock %}
+
+{% block content %}
+<section class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <h1 class="h3 mb-4">{{ titulo }}</h1>
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+                        {% endif %}
+
+                        {% for field in form %}
+                        {% if field.name == "dias_semana" %}
+                        <fieldset class="mb-3">
+                            <legend class="form-label">{{ field.label }}</legend>
+                            <div class="d-flex flex-wrap gap-2 mb-3" aria-label="Selección rápida de días">
+                                <button type="button" class="btn btn-sm btn-outline-secondary js-day-preset" data-days="0,1,2,3,4">Lun a vie</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary js-day-preset" data-days="5,6">Fin de semana</button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary js-day-preset" data-days="0,1,2,3,4,5,6">Todos</button>
+                                <button type="button" class="btn btn-sm btn-link js-day-preset" data-days="">Limpiar</button>
+                            </div>
+                            <div class="row row-cols-2 row-cols-md-4 g-2 availability-days">
+                                {% for choice in field %}
+                                <div class="col"><div class="form-check">{{ choice.tag }} <label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label></div></div>
+                                {% endfor %}
+                            </div>
+                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </fieldset>
+                        {% elif field.field.widget.input_type == "checkbox" %}
+                        <div class="form-check mb-3">
+                            {{ field }}
+                            <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% else %}
+                        <div class="mb-3">
+                            <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                            {% for error in field.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+
+                        <div class="d-flex flex-wrap gap-2 mt-4">
+                            <button type="submit" class="btn btn-success">{{ submit }}</button>
+                            <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll(".js-day-preset").forEach((button) => {
+        button.addEventListener("click", () => {
+            const selectedDays = button.dataset.days ? button.dataset.days.split(",") : [];
+            document.querySelectorAll('input[name="dias_semana"]').forEach((checkbox) => {
+                checkbox.checked = selectedDays.includes(checkbox.value);
+            });
+        });
+    });
+</script>
+{% endblock %}

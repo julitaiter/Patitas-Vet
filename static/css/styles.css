@@ -16,6 +16,37 @@ body {
   font-size: 0.9rem;
 }
 
+.navbar-catalog-search {
+  width: min(100%, 430px);
+}
+
+#cart-count {
+  font-size: 0.65rem;
+}
+
+.ui-autocomplete {
+  z-index: 1100;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.catalog-search-result {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.4rem;
+}
+
+.catalog-search-thumbnail {
+  width: 42px;
+  height: 42px;
+  object-fit: cover;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
 /* line 2, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/_footer.scss */
 footer a {
   transition: opacity 0.3s ease;
@@ -163,6 +194,32 @@ footer a:hover {
   color: #198754;
   font-size: 1.1rem;
   font-weight: 700;
+}
+
+.catalog-detail-image,
+.catalog-detail-placeholder {
+  max-height: 520px;
+  min-height: 320px;
+  object-fit: cover;
+  background: #f8f9fa;
+}
+
+.cart-product-image {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+}
+
+.cart-quantity {
+  width: 85px;
+}
+
+.cart-floating-feedback {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 1090;
+  width: min(420px, calc(100% - 2rem));
 }
 
 @media (max-width: 768px) {

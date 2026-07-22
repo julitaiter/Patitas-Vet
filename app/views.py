@@ -3,19 +3,23 @@ from datetime import datetime
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.db.models.deletion import ProtectedError
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.urls import reverse
+from django.views.decorators.http import require_GET, require_POST
 
 from .forms import (
     PerfilForm,
+    DisponibilidadTurnoForm,
     ProductoForm,
+    SalaForm,
     ServicioForm,
     TurnoEmpleadoForm,
     TurnoForm,
 )
-from .models import Categoria, Producto, Sala, Servicio, Turno
+from .models import Categoria, DisponibilidadTurno, Producto, Sala, Servicio, Turno
 from .services.turnos import obtener_horarios_disponibles
 
 
@@ -101,6 +105,111 @@ def listar_catalogo(request):
         "query": query,
         "categoria_id": categoria_id_int,
     })
+
+
+def detalle_item(request, model, pk):
+    config = get_item_config(model)
+
+    if config is None:
+        messages.error(request, "Tipo de ítem inválido.")
+        return redirect("listar_catalogo")
+
+    queryset = config["model_class"].objects.select_related("categoria")
+    if model == "servicio":
+        queryset = queryset.select_related("sala")
+
+    item = get_object_or_404(queryset, pk=pk, activo=True)
+    return render(request, "catalogo/detalle_item.html", {
+        "item": item,
+        "model": model,
+    })
+
+
+@login_required
+def ver_carrito(request):
+    return render(request, "carrito/ver_carrito.html")
+
+
+@login_required
+@require_GET
+def validar_stock_producto(request, pk):
+    try:
+        cantidad = int(request.GET.get("cantidad", 1))
+    except (TypeError, ValueError):
+        cantidad = 0
+
+    if cantidad < 1:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": "La cantidad solicitada debe ser mayor a cero.",
+        }, status=400)
+
+    try:
+        producto = Producto.objects.get(pk=pk)
+    except Producto.DoesNotExist:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": "El producto no existe.",
+        }, status=404)
+
+    if not producto.activo:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": "Este producto ya no está disponible.",
+        }, status=404)
+
+    if producto.stock < 1:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": "Este producto no tiene stock disponible.",
+        })
+
+    if cantidad > producto.stock:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": f"Solo hay {producto.stock} unidad(es) disponibles.",
+        })
+
+    return JsonResponse({
+        "ok": True,
+        "mensaje": "Producto disponible.",
+        "producto": {
+            "id": producto.pk,
+            "nombre": producto.nombre,
+            "precio": str(producto.precio),
+            "imagen_url": producto.imagen.url if producto.imagen else "",
+            "stock": producto.stock,
+            "detalle_url": reverse("detalle_producto", kwargs={"pk": producto.pk}),
+        },
+    })
+
+
+@require_GET
+def buscar_catalogo_ajax(request):
+    term = request.GET.get("term", "").strip()
+    if len(term) < 2:
+        return JsonResponse([], safe=False)
+
+    filtro = Q(nombre__icontains=term) | Q(descripcion__icontains=term)
+    productos = Producto.objects.filter(activo=True).filter(filtro).order_by("nombre")[:6]
+    servicios = Servicio.objects.filter(activo=True).filter(filtro).order_by("nombre")[:6]
+
+    resultados = []
+    for item, tipo, url_name in (
+        *((item, "Producto", "detalle_producto") for item in productos),
+        *((item, "Servicio", "detalle_servicio") for item in servicios),
+    ):
+        resultados.append({
+            "label": f"{item.nombre} - {tipo}",
+            "value": item.nombre,
+            "tipo": tipo,
+            "url": reverse(url_name, kwargs={"pk": item.pk}),
+            "precio": str(item.precio),
+            "imagen_url": item.imagen.url if item.imagen else "",
+        })
+
+    resultados.sort(key=lambda resultado: resultado["value"].lower())
+    return JsonResponse(resultados[:12], safe=False)
 
 
 def get_item_config(model):
@@ -326,6 +435,157 @@ def gestionar_turnos(request):
         "servicio_id": int(servicio_id) if servicio_id.isdigit() else None,
         "sala_id": int(sala_id) if sala_id.isdigit() else None,
         "query": query,
+    })
+
+
+@staff_member_required
+def gestionar_salas(request):
+    return render(request, "turnos/gestionar_salas.html", {
+        **gestionar_salas_context(),
+        "abrir_modal_sala": request.GET.get("modal") == "nueva-sala",
+    })
+
+
+def gestionar_salas_context(sala_form=None, abrir_modal_sala=False):
+    salas = (
+        Sala.objects
+        .prefetch_related("disponibilidades")
+        .order_by("nombre")
+    )
+    return {
+        "salas": salas,
+        "sala_form": sala_form or SalaForm(),
+        "abrir_modal_sala": abrir_modal_sala,
+    }
+
+
+@staff_member_required
+def nueva_sala(request):
+    if request.method == "POST":
+        form = SalaForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Sala creada correctamente.")
+            return redirect("gestionar_salas")
+    else:
+        form = SalaForm()
+
+    return render(
+        request,
+        "turnos/gestionar_salas.html",
+        gestionar_salas_context(form, abrir_modal_sala=True),
+    )
+
+
+@staff_member_required
+def editar_sala(request, pk):
+    sala = get_object_or_404(Sala, pk=pk)
+    if request.method == "POST":
+        form = SalaForm(request.POST, instance=sala)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Sala actualizada correctamente.")
+            return redirect("gestionar_salas")
+    else:
+        form = SalaForm(instance=sala)
+
+    return render(request, "turnos/form_gestion.html", {
+        "form": form,
+        "titulo": f"Editar sala: {sala.nombre}",
+        "submit": "Actualizar sala",
+        "cancel_url": reverse("gestionar_salas"),
+    })
+
+
+@staff_member_required
+def eliminar_sala(request, pk):
+    sala = get_object_or_404(Sala, pk=pk)
+    if request.method == "POST":
+        try:
+            sala.delete()
+        except ProtectedError:
+            messages.error(
+                request,
+                "No se puede eliminar la sala porque está vinculada a servicios o turnos. Podés desactivarla.",
+            )
+        else:
+            messages.success(request, "Sala eliminada correctamente.")
+        return redirect("gestionar_salas")
+
+    return render(request, "turnos/confirmar_eliminar_gestion.html", {
+        "obj": sala,
+        "tipo": "sala",
+        "cancel_url": reverse("gestionar_salas"),
+    })
+
+
+@staff_member_required
+def nueva_disponibilidad(request):
+    sala_id = request.GET.get("sala", "")
+    initial = {"sala": int(sala_id)} if sala_id.isdigit() else None
+
+    if request.method == "POST":
+        form = DisponibilidadTurnoForm(request.POST)
+        if form.is_valid():
+            disponibilidades = form.save_disponibilidades()
+            messages.success(
+                request,
+                f"Se crearon {len(disponibilidades)} disponibilidades correctamente.",
+            )
+            return redirect("gestionar_salas")
+    else:
+        form = DisponibilidadTurnoForm(initial=initial)
+
+    return render(request, "turnos/form_gestion.html", {
+        "form": form,
+        "titulo": "Nueva disponibilidad",
+        "submit": "Guardar disponibilidad",
+        "cancel_url": reverse("gestionar_salas"),
+    })
+
+
+@staff_member_required
+def editar_disponibilidad(request, pk):
+    disponibilidad = get_object_or_404(
+        DisponibilidadTurno.objects.select_related("sala"),
+        pk=pk,
+    )
+    if request.method == "POST":
+        form = DisponibilidadTurnoForm(request.POST, instance=disponibilidad)
+        if form.is_valid():
+            disponibilidades = form.save_disponibilidades()
+            adicionales = len(disponibilidades) - 1
+            mensaje = "Disponibilidad actualizada correctamente."
+            if adicionales:
+                mensaje += f" Se crearon {adicionales} disponibilidades adicionales."
+            messages.success(request, mensaje)
+            return redirect("gestionar_salas")
+    else:
+        form = DisponibilidadTurnoForm(instance=disponibilidad)
+
+    return render(request, "turnos/form_gestion.html", {
+        "form": form,
+        "titulo": f"Editar disponibilidad de {disponibilidad.sala.nombre}",
+        "submit": "Actualizar disponibilidad",
+        "cancel_url": reverse("gestionar_salas"),
+    })
+
+
+@staff_member_required
+def eliminar_disponibilidad(request, pk):
+    disponibilidad = get_object_or_404(
+        DisponibilidadTurno.objects.select_related("sala"),
+        pk=pk,
+    )
+    if request.method == "POST":
+        disponibilidad.delete()
+        messages.success(request, "Disponibilidad eliminada correctamente.")
+        return redirect("gestionar_salas")
+
+    return render(request, "turnos/confirmar_eliminar_gestion.html", {
+        "obj": disponibilidad,
+        "tipo": "disponibilidad",
+        "cancel_url": reverse("gestionar_salas"),
     })
 
 

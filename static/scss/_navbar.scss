@@ -7,3 +7,34 @@
     height: 32px;
     font-size: 0.9rem;
 }
+
+.navbar-catalog-search {
+    width: min(100%, 430px);
+}
+
+#cart-count {
+    font-size: 0.65rem;
+}
+
+.ui-autocomplete {
+    z-index: 1100;
+    max-height: 360px;
+    overflow-y: auto;
+}
+
+.catalog-search-result {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem;
+}
+
+.catalog-search-thumbnail {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}

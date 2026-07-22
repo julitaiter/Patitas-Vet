@@ -2,9 +2,10 @@ from datetime import datetime
 
 from django import forms
 from django.contrib.auth import get_user_model
+from django.db import transaction
 from django.forms import ModelForm
 
-from .models import Producto, Servicio, Turno
+from .models import DisponibilidadTurno, Producto, Sala, Servicio, Turno
 from .services.turnos import obtener_horarios_disponibles, turno_esta_disponible
 
 
@@ -16,7 +17,9 @@ class BootstrapFormMixin:
         for field in self.fields.values():
             widget = field.widget
 
-            if isinstance(widget, forms.CheckboxInput):
+            if isinstance(widget, forms.CheckboxSelectMultiple):
+                widget.attrs.setdefault("class", "form-check-input")
+            elif isinstance(widget, forms.CheckboxInput):
                 widget.attrs.setdefault("class", "form-check-input")
             elif isinstance(widget, forms.Select):
                 widget.attrs.setdefault("class", "form-select")
@@ -71,6 +74,119 @@ class ProductoForm(ItemCatalogoForm):
     class Meta(ItemCatalogoForm.Meta):
         model = Producto
         fields = ItemCatalogoForm.Meta.fields + ["stock"]
+
+
+class SalaForm(BootstrapFormMixin, forms.ModelForm):
+    class Meta:
+        model = Sala
+        fields = ["nombre", "descripcion", "activa"]
+        widgets = {
+            "descripcion": forms.Textarea(attrs={"rows": 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.aplicar_clases_bootstrap()
+
+
+class DisponibilidadTurnoForm(BootstrapFormMixin, forms.ModelForm):
+    dias_semana = forms.MultipleChoiceField(
+        choices=DisponibilidadTurno.DIAS_SEMANA,
+        widget=forms.CheckboxSelectMultiple,
+        label="Días de la semana",
+        help_text="Seleccioná uno o varios días para aplicar este horario.",
+    )
+
+    class Meta:
+        model = DisponibilidadTurno
+        fields = [
+            "sala",
+            "dias_semana",
+            "hora_inicio",
+            "hora_fin",
+            "intervalo_minutos",
+            "activa",
+        ]
+        widgets = {
+            "hora_inicio": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "hora_fin": forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+            "intervalo_minutos": forms.NumberInput(attrs={"min": 1}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.aplicar_clases_bootstrap()
+        self.fields["sala"].queryset = Sala.objects.order_by("nombre")
+        self.fields["hora_inicio"].input_formats = ["%H:%M"]
+        self.fields["hora_fin"].input_formats = ["%H:%M"]
+        if self.instance.pk and not self.is_bound:
+            self.initial["dias_semana"] = [str(self.instance.dia_semana)]
+
+    def clean_intervalo_minutos(self):
+        intervalo = self.cleaned_data.get("intervalo_minutos")
+        if intervalo is not None and intervalo < 1:
+            raise forms.ValidationError("El intervalo debe ser de al menos 1 minuto.")
+        return intervalo
+
+    def clean(self):
+        cleaned_data = super().clean()
+        sala = cleaned_data.get("sala")
+        dias_semana = [int(dia) for dia in cleaned_data.get("dias_semana", [])]
+        hora_inicio = cleaned_data.get("hora_inicio")
+        hora_fin = cleaned_data.get("hora_fin")
+
+        if not all((sala, dias_semana, hora_inicio, hora_fin)):
+            return cleaned_data
+
+        if hora_inicio >= hora_fin:
+            self.add_error("hora_fin", "La hora de fin debe ser posterior a la hora de inicio.")
+            return cleaned_data
+
+        superpuestas = DisponibilidadTurno.objects.filter(
+            sala=sala,
+            dia_semana__in=dias_semana,
+            hora_inicio__lt=hora_fin,
+            hora_fin__gt=hora_inicio,
+        )
+        if self.instance.pk:
+            superpuestas = superpuestas.exclude(pk=self.instance.pk)
+
+        if superpuestas.exists():
+            dias_con_conflicto = sorted(set(
+                superpuestas.values_list("dia_semana", flat=True)
+            ))
+            etiquetas = dict(DisponibilidadTurno.DIAS_SEMANA)
+            nombres = ", ".join(etiquetas[dia] for dia in dias_con_conflicto)
+            raise forms.ValidationError(
+                f"El horario se superpone con otra disponibilidad en: {nombres}."
+            )
+
+        return cleaned_data
+
+    @transaction.atomic
+    def save_disponibilidades(self):
+        dias = [int(dia) for dia in self.cleaned_data["dias_semana"]]
+        instance = self.instance
+        dia_original = instance.dia_semana if instance.pk else None
+        dia_principal = dia_original if dia_original in dias else dias[0]
+
+        instance.dia_semana = dia_principal
+        instance.save()
+        disponibilidades = [instance]
+
+        for dia in dias:
+            if dia == dia_principal:
+                continue
+            disponibilidades.append(DisponibilidadTurno.objects.create(
+                sala=instance.sala,
+                dia_semana=dia,
+                hora_inicio=instance.hora_inicio,
+                hora_fin=instance.hora_fin,
+                intervalo_minutos=instance.intervalo_minutos,
+                activa=instance.activa,
+            ))
+
+        return disponibilidades
 
 
 class TurnoForm(forms.ModelForm):

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block title %}Eliminar {{ tipo }} | Patitas Vet{% endblock %}
+
+{% block content %}
+<section class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-4 p-md-5">
+                    <h1 class="h3">Eliminar {{ tipo }}</h1>
+                    <p>¿Confirmás que querés eliminar <strong>{{ obj }}</strong>?</p>
+                    {% if tipo == "sala" %}
+                    <p class="text-muted small">
+                        Si está vinculada a servicios o turnos no podrá eliminarse. En ese caso, podés desactivarla.
+                    </p>
+                    {% endif %}
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                            <a href="{{ cancel_url }}" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

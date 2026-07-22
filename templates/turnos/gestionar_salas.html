@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block title %}Salas y disponibilidades | Patitas Vet{% endblock %}
+
+{% block content %}
+<section class="container my-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="mb-1">Salas y disponibilidades</h1>
+            <p class="text-muted mb-0">Administrá los espacios y horarios disponibles para solicitar turnos.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'gestionar_turnos' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-calendar-check" aria-hidden="true"></i> Ver turnos
+            </a>
+            <a href="{% url 'nueva_disponibilidad' %}" class="btn btn-outline-success">
+                <i class="bi bi-clock" aria-hidden="true"></i> Nueva disponibilidad
+            </a>
+            <a href="{% url 'nueva_sala' %}" class="btn btn-success" data-bs-toggle="modal"
+                data-bs-target="#nuevaSalaModal" role="button">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i> Nueva sala
+            </a>
+        </div>
+    </div>
+
+    {% for sala in salas %}
+    <article class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-white py-3 d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h2 class="h5 mb-0">{{ sala.nombre }}</h2>
+                    {% if sala.activa %}
+                    <span class="badge bg-success">Activa</span>
+                    {% else %}
+                    <span class="badge bg-secondary">Inactiva</span>
+                    {% endif %}
+                </div>
+                {% if sala.descripcion %}
+                <p class="text-muted small mb-0 mt-1">{{ sala.descripcion }}</p>
+                {% endif %}
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <a href="{% url 'nueva_disponibilidad' %}?sala={{ sala.pk }}"
+                    class="btn btn-sm btn-outline-success">
+                    <i class="bi bi-clock" aria-hidden="true"></i> Agregar horario
+                </a>
+                <a href="{% url 'editar_sala' pk=sala.pk %}" class="btn btn-sm btn-outline-primary"
+                    aria-label="Editar sala {{ sala.nombre }}">
+                    <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+                </a>
+                <a href="{% url 'eliminar_sala' pk=sala.pk %}" class="btn btn-sm btn-outline-danger"
+                    aria-label="Eliminar sala {{ sala.nombre }}">
+                    <i class="bi bi-trash" aria-hidden="true"></i>
+                </a>
+            </div>
+        </div>
+
+        {% with disponibilidades=sala.disponibilidades.all %}
+        {% if disponibilidades %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Día</th>
+                        <th>Desde</th>
+                        <th>Hasta</th>
+                        <th>Intervalo</th>
+                        <th>Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for disponibilidad in disponibilidades %}
+                    <tr>
+                        <td class="fw-semibold">{{ disponibilidad.get_dia_semana_display }}</td>
+                        <td>{{ disponibilidad.hora_inicio|time:"H:i" }}</td>
+                        <td>{{ disponibilidad.hora_fin|time:"H:i" }}</td>
+                        <td>{{ disponibilidad.intervalo_minutos }} min</td>
+                        <td>
+                            {% if disponibilidad.activa %}
+                            <span class="badge bg-success">Activa</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactiva</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="{% url 'editar_disponibilidad' pk=disponibilidad.pk %}"
+                                class="btn btn-sm btn-outline-primary" title="Editar disponibilidad"
+                                aria-label="Editar disponibilidad">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                            </a>
+                            <a href="{% url 'eliminar_disponibilidad' pk=disponibilidad.pk %}"
+                                class="btn btn-sm btn-outline-danger" title="Eliminar disponibilidad"
+                                aria-label="Eliminar disponibilidad">
+                                <i class="bi bi-trash" aria-hidden="true"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card-body text-center text-muted py-4">
+            Esta sala todavía no tiene disponibilidades configuradas.
+        </div>
+        {% endif %}
+        {% endwith %}
+    </article>
+    {% empty %}
+    <div class="card shadow-sm border-0">
+        <div class="card-body text-center p-5">
+            <i class="bi bi-door-open display-5 text-secondary" aria-hidden="true"></i>
+            <h2 class="h5 mt-3">No hay salas</h2>
+            <p class="text-muted">Creá una sala para comenzar a configurar disponibilidades.</p>
+            <a href="{% url 'nueva_sala' %}" class="btn btn-success" data-bs-toggle="modal"
+                data-bs-target="#nuevaSalaModal" role="button">Crear sala</a>
+        </div>
+    </div>
+    {% endfor %}
+</section>
+
+<div class="modal fade" id="nuevaSalaModal" tabindex="-1" aria-labelledby="nuevaSalaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="post" action="{% url 'nueva_sala' %}" novalidate>
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h2 class="modal-title fs-5" id="nuevaSalaModalLabel">Nueva sala</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    {% if sala_form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">{{ sala_form.non_field_errors }}</div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ sala_form.nombre.id_for_label }}">{{ sala_form.nombre.label }}</label>
+                        {{ sala_form.nombre }}
+                        {% for error in sala_form.nombre.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label" for="{{ sala_form.descripcion.id_for_label }}">{{ sala_form.descripcion.label }}</label>
+                        {{ sala_form.descripcion }}
+                        {% for error in sala_form.descripcion.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+
+                    <div class="form-check">
+                        {{ sala_form.activa }}
+                        <label class="form-check-label" for="{{ sala_form.activa.id_for_label }}">{{ sala_form.activa.label }}</label>
+                        {% for error in sala_form.activa.errors %}<div class="text-danger small mt-1">{{ error }}</div>{% endfor %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar sala</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if abrir_modal_sala %}
+<script>
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("nuevaSalaModal")).show();
+</script>
+{% endif %}
+{% endblock %}
