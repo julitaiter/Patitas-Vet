@@ -22,3 +22,29 @@
         align-items: flex-start;
     }
 }
+
+.catalog-detail-image,
+.catalog-detail-placeholder {
+    max-height: 520px;
+    min-height: 320px;
+    object-fit: cover;
+    background: #f8f9fa;
+}
+
+.cart-product-image {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+}
+
+.cart-quantity {
+    width: 85px;
+}
+
+.cart-floating-feedback {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 1090;
+    width: min(420px, calc(100% - 2rem));
+}

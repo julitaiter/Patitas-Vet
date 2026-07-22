@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
+from django.urls import reverse
+from django.views.decorators.http import require_GET, require_POST
 
 from .forms import (
     PerfilForm,
@@ -101,6 +102,111 @@ def listar_catalogo(request):
         "query": query,
         "categoria_id": categoria_id_int,
     })
+
+
+def detalle_item(request, model, pk):
+    config = get_item_config(model)
+
+    if config is None:
+        messages.error(request, "Tipo de ítem inválido.")
+        return redirect("listar_catalogo")
+
+    queryset = config["model_class"].objects.select_related("categoria")
+    if model == "servicio":
+        queryset = queryset.select_related("sala")
+
+    item = get_object_or_404(queryset, pk=pk, activo=True)
+    return render(request, "catalogo/detalle_item.html", {
+        "item": item,
+        "model": model,
+    })
+
+
+@login_required
+def ver_carrito(request):
+    return render(request, "carrito/ver_carrito.html")
+
+
+@login_required
+@require_GET
+def validar_stock_producto(request, pk):
+    try:
+        cantidad = int(request.GET.get("cantidad", 1))
+    except (TypeError, ValueError):
+        cantidad = 0
+
+    if cantidad < 1:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": "La cantidad solicitada debe ser mayor a cero.",
+        }, status=400)
+
+    try:
+        producto = Producto.objects.get(pk=pk)
+    except Producto.DoesNotExist:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": "El producto no existe.",
+        }, status=404)
+
+    if not producto.activo:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": "Este producto ya no está disponible.",
+        }, status=404)
+
+    if producto.stock < 1:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": "Este producto no tiene stock disponible.",
+        })
+
+    if cantidad > producto.stock:
+        return JsonResponse({
+            "ok": False,
+            "mensaje": f"Solo hay {producto.stock} unidad(es) disponibles.",
+        })
+
+    return JsonResponse({
+        "ok": True,
+        "mensaje": "Producto disponible.",
+        "producto": {
+            "id": producto.pk,
+            "nombre": producto.nombre,
+            "precio": str(producto.precio),
+            "imagen_url": producto.imagen.url if producto.imagen else "",
+            "stock": producto.stock,
+            "detalle_url": reverse("detalle_producto", kwargs={"pk": producto.pk}),
+        },
+    })
+
+
+@require_GET
+def buscar_catalogo_ajax(request):
+    term = request.GET.get("term", "").strip()
+    if len(term) < 2:
+        return JsonResponse([], safe=False)
+
+    filtro = Q(nombre__icontains=term) | Q(descripcion__icontains=term)
+    productos = Producto.objects.filter(activo=True).filter(filtro).order_by("nombre")[:6]
+    servicios = Servicio.objects.filter(activo=True).filter(filtro).order_by("nombre")[:6]
+
+    resultados = []
+    for item, tipo, url_name in (
+        *((item, "Producto", "detalle_producto") for item in productos),
+        *((item, "Servicio", "detalle_servicio") for item in servicios),
+    ):
+        resultados.append({
+            "label": f"{item.nombre} - {tipo}",
+            "value": item.nombre,
+            "tipo": tipo,
+            "url": reverse(url_name, kwargs={"pk": item.pk}),
+            "precio": str(item.precio),
+            "imagen_url": item.imagen.url if item.imagen else "",
+        })
+
+    resultados.sort(key=lambda resultado: resultado["value"].lower())
+    return JsonResponse(resultados[:12], safe=False)
 
 
 def get_item_config(model):

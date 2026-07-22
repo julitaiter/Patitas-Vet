@@ -10,9 +10,15 @@ urlpatterns = [
     path("mi-perfil/editar/", views.editar_perfil, name="editar_perfil"),
 
     path("catalogo/", views.listar_catalogo, name="listar_catalogo"),
+    path("catalogo/producto/<int:pk>/", views.detalle_item, {"model": "producto"}, name="detalle_producto"),
+    path("catalogo/servicio/<int:pk>/", views.detalle_item, {"model": "servicio"}, name="detalle_servicio"),
     path("catalogo/nuevo/<str:model>/", views.nuevo_item, name="nuevo_item"),
     path("catalogo/<str:model>/<int:pk>/editar/", views.editar_item, name="editar_item"),
     path("catalogo/<str:model>/<int:pk>/eliminar/", views.eliminar_item, name="eliminar_item"),
+
+    path("carrito/", views.ver_carrito, name="ver_carrito"),
+    path("ajax/producto/<int:pk>/validar-stock/", views.validar_stock_producto, name="validar_stock_producto"),
+    path("ajax/buscar-catalogo/", views.buscar_catalogo_ajax, name="buscar_catalogo_ajax"),
 
     path("turnos/servicio/<int:servicio_pk>/nuevo/", views.solicitar_turno, name="solicitar_turno"),
     path("turnos/mis-turnos/", views.mis_turnos, name="mis_turnos"),

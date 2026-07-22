@@ -13,7 +13,17 @@
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav ms-auto align-items-lg-center">
+            <form class="navbar-catalog-search mx-lg-auto my-3 my-lg-0" action="{% url 'listar_catalogo' %}" method="get" role="search">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
+                    <input type="search" name="q" id="navbar-catalog-search"
+                        class="form-control border-start-0" placeholder="Buscar productos y servicios"
+                        aria-label="Buscar productos y servicios"
+                        data-search-url="{% url 'buscar_catalogo_ajax' %}">
+                </div>
+            </form>
+
+            <ul class="navbar-nav ms-lg-auto align-items-lg-center">
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'listar_catalogo' %}">
                         Catálogo
@@ -27,6 +37,16 @@
                 </li>
 
                 {% if user.is_authenticated %}
+                <li class="nav-item ms-lg-2">
+                    <a class="nav-link position-relative d-inline-flex align-items-center" href="{% url 'ver_carrito' %}"
+                        aria-label="Ver carrito">
+                        <i class="bi bi-cart3 fs-5" aria-hidden="true"></i>
+                        <span class="ms-1 d-lg-none">Carrito</span>
+                        <span id="cart-count"
+                            class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">0</span>
+                    </a>
+                </li>
+
                 <li class="nav-item">
                     <a class="nav-link" href="{% url 'mis_turnos' %}">
                         Mis turnos
