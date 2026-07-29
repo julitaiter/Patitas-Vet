@@ -3,8 +3,9 @@ from datetime import datetime
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
+from django.db import IntegrityError, transaction
 from django.db.models.deletion import ProtectedError
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -20,13 +21,16 @@ from .forms import (
     TurnoForm,
 )
 from .models import Categoria, DisponibilidadTurno, Producto, Sala, Servicio, Turno
-from .services.turnos import obtener_horarios_disponibles
+from .services.turnos import (
+    obtener_horarios_disponibles,
+    obtener_sala_disponible_para_turno,
+)
 
 
 def index(request):
     servicios_destacados = (
         Servicio.objects
-        .select_related("categoria", "sala")
+        .select_related("categoria")
         .filter(activo=True, destacado=True)
         .order_by("nombre")[:3]
     )
@@ -34,7 +38,7 @@ def index(request):
     if not servicios_destacados:
         servicios_destacados = (
             Servicio.objects
-            .select_related("categoria", "sala")
+            .select_related("categoria")
             .filter(activo=True)
             .order_by("nombre")[:3]
         )
@@ -80,8 +84,7 @@ def listar_catalogo(request):
     categoria_id = request.GET.get("categoria", "").strip()
     categoria_id_int = int(categoria_id) if categoria_id.isdigit() else None
 
-    servicios = Servicio.objects.select_related(
-        "categoria", "sala").filter(activo=True)
+    servicios = Servicio.objects.select_related("categoria").filter(activo=True)
     productos = Producto.objects.select_related(
         "categoria").filter(activo=True)
     categorias = Categoria.objects.filter(activa=True).order_by("nombre")
@@ -115,8 +118,6 @@ def detalle_item(request, model, pk):
         return redirect("listar_catalogo")
 
     queryset = config["model_class"].objects.select_related("categoria")
-    if model == "servicio":
-        queryset = queryset.select_related("sala")
 
     item = get_object_or_404(queryset, pk=pk, activo=True)
     return render(request, "catalogo/detalle_item.html", {
@@ -314,7 +315,7 @@ def eliminar_item(request, model, pk):
 @login_required
 def solicitar_turno(request, servicio_pk):
     servicio = get_object_or_404(
-        Servicio.objects.select_related("sala"),
+        Servicio.objects,
         pk=servicio_pk,
         activo=True,
     )
@@ -326,11 +327,24 @@ def solicitar_turno(request, servicio_pk):
             turno = form.save(commit=False)
             turno.usuario = request.user
             turno.servicio = servicio
-            turno.sala = servicio.sala
-            turno.save()
+            try:
+                with transaction.atomic():
+                    sala = obtener_sala_disponible_para_turno(
+                        servicio,
+                        turno.fecha,
+                        turno.hora,
+                    )
+                    if sala is not None:
+                        turno.sala = sala
+                        turno.save()
+            except IntegrityError:
+                sala = None
 
-            messages.success(request, "Turno solicitado correctamente.")
-            return redirect("mis_turnos")
+            if sala is None:
+                form.add_error(None, "El horario seleccionado ya no está disponible.")
+            else:
+                messages.success(request, "Turno solicitado correctamente.")
+                return redirect("mis_turnos")
     else:
         form = TurnoForm(servicio=servicio)
 
@@ -363,7 +377,7 @@ def horarios_disponibles(request):
         return JsonResponse({"horarios": []})
 
     try:
-        servicio = Servicio.objects.select_related("sala").get(
+        servicio = Servicio.objects.get(
             pk=servicio_id,
             activo=True,
         )
@@ -371,7 +385,7 @@ def horarios_disponibles(request):
     except (Servicio.DoesNotExist, ValueError):
         return JsonResponse({"horarios": []})
 
-    horarios = obtener_horarios_disponibles(servicio.sala, fecha)
+    horarios = obtener_horarios_disponibles(servicio, fecha)
 
     return JsonResponse({
         "horarios": [
@@ -441,21 +455,49 @@ def gestionar_turnos(request):
 @staff_member_required
 def gestionar_salas(request):
     return render(request, "turnos/gestionar_salas.html", {
-        **gestionar_salas_context(),
+        **gestionar_salas_context(request=request),
         "abrir_modal_sala": request.GET.get("modal") == "nueva-sala",
     })
 
 
-def gestionar_salas_context(sala_form=None, abrir_modal_sala=False):
-    salas = (
-        Sala.objects
-        .prefetch_related("disponibilidades")
-        .order_by("nombre")
+def gestionar_salas_context(request=None, sala_form=None, abrir_modal_sala=False):
+    servicio_id = request.GET.get("servicio", "") if request else ""
+    sala_id = request.GET.get("sala", "") if request else ""
+    dia_semana = request.GET.get("dia", "") if request else ""
+    activa = request.GET.get("activa", "") if request else ""
+
+    disponibilidades = DisponibilidadTurno.objects.select_related(
+        "servicio", "sala"
     )
+    if servicio_id.isdigit():
+        disponibilidades = disponibilidades.filter(servicio_id=int(servicio_id))
+    if dia_semana.isdigit():
+        disponibilidades = disponibilidades.filter(dia_semana=int(dia_semana))
+    if activa in {"0", "1"}:
+        disponibilidades = disponibilidades.filter(activa=activa == "1")
+
+    salas = Sala.objects.all()
+    if sala_id.isdigit():
+        salas = salas.filter(pk=int(sala_id))
+    if servicio_id.isdigit() or dia_semana.isdigit() or activa in {"0", "1"}:
+        salas = salas.filter(pk__in=disponibilidades.values("sala_id"))
+    salas = salas.prefetch_related(Prefetch(
+        "disponibilidades",
+        queryset=disponibilidades,
+        to_attr="disponibilidades_filtradas",
+    )).order_by("nombre")
+
     return {
         "salas": salas,
         "sala_form": sala_form or SalaForm(),
         "abrir_modal_sala": abrir_modal_sala,
+        "servicios_filtro": Servicio.objects.filter(activo=True).order_by("nombre"),
+        "salas_filtro": Sala.objects.order_by("nombre"),
+        "dias_semana": DisponibilidadTurno.DIAS_SEMANA,
+        "servicio_id": int(servicio_id) if servicio_id.isdigit() else None,
+        "sala_id": int(sala_id) if sala_id.isdigit() else None,
+        "dia_semana": int(dia_semana) if dia_semana.isdigit() else None,
+        "activa": activa,
     }
 
 
@@ -473,7 +515,11 @@ def nueva_sala(request):
     return render(
         request,
         "turnos/gestionar_salas.html",
-        gestionar_salas_context(form, abrir_modal_sala=True),
+        gestionar_salas_context(
+            request=request,
+            sala_form=form,
+            abrir_modal_sala=True,
+        ),
     )
 
 
@@ -506,7 +552,7 @@ def eliminar_sala(request, pk):
         except ProtectedError:
             messages.error(
                 request,
-                "No se puede eliminar la sala porque está vinculada a servicios o turnos. Podés desactivarla.",
+                "No se puede eliminar la sala porque está vinculada a turnos. Podés desactivarla.",
             )
         else:
             messages.success(request, "Sala eliminada correctamente.")
@@ -547,7 +593,7 @@ def nueva_disponibilidad(request):
 @staff_member_required
 def editar_disponibilidad(request, pk):
     disponibilidad = get_object_or_404(
-        DisponibilidadTurno.objects.select_related("sala"),
+        DisponibilidadTurno.objects.select_related("servicio", "sala"),
         pk=pk,
     )
     if request.method == "POST":
@@ -565,7 +611,7 @@ def editar_disponibilidad(request, pk):
 
     return render(request, "turnos/form_gestion.html", {
         "form": form,
-        "titulo": f"Editar disponibilidad de {disponibilidad.sala.nombre}",
+        "titulo": f"Editar disponibilidad de {disponibilidad.servicio.nombre}",
         "submit": "Actualizar disponibilidad",
         "cancel_url": reverse("gestionar_salas"),
     })
@@ -574,7 +620,7 @@ def editar_disponibilidad(request, pk):
 @staff_member_required
 def eliminar_disponibilidad(request, pk):
     disponibilidad = get_object_or_404(
-        DisponibilidadTurno.objects.select_related("sala"),
+        DisponibilidadTurno.objects.select_related("servicio", "sala"),
         pk=pk,
     )
     if request.method == "POST":
@@ -598,11 +644,28 @@ def editar_turno_empleado(request, pk):
 
         if form.is_valid():
             turno = form.save(commit=False)
-            turno.sala = turno.servicio.sala
-            turno.save()
+            try:
+                with transaction.atomic():
+                    sala = obtener_sala_disponible_para_turno(
+                        turno.servicio,
+                        turno.fecha,
+                        turno.hora,
+                        exclude_turno_id=turno.pk,
+                    )
+                    if sala is not None:
+                        turno.sala = sala
+                        turno.save()
+            except IntegrityError:
+                sala = None
 
-            messages.success(request, "Turno actualizado correctamente.")
-            return redirect("gestionar_turnos")
+            if sala is None:
+                form.add_error(
+                    None,
+                    "No hay salas disponibles para el servicio en esa fecha y horario.",
+                )
+            else:
+                messages.success(request, "Turno actualizado correctamente.")
+                return redirect("gestionar_turnos")
     else:
         form = TurnoEmpleadoForm(instance=turno)
 

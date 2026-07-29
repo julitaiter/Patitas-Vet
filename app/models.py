@@ -60,13 +60,6 @@ class ItemCatalogo(BasicModel):
 
 
 class Servicio(ItemCatalogo):
-    sala = models.ForeignKey(
-        Sala,
-        on_delete=models.PROTECT,
-        related_name="servicios",
-        blank=True,
-        null=True
-    )
     duracion_minutos = models.PositiveIntegerField(default=30)
 
     class Meta:
@@ -101,6 +94,11 @@ class DisponibilidadTurno(BasicModel):
         (DIA_DOMINGO, "Domingo"),
     ]
 
+    servicio = models.ForeignKey(
+        Servicio,
+        on_delete=models.CASCADE,
+        related_name="disponibilidades",
+    )
     sala = models.ForeignKey(
         Sala,
         on_delete=models.CASCADE,
@@ -115,16 +113,16 @@ class DisponibilidadTurno(BasicModel):
     class Meta:
         verbose_name = "disponibilidad de turno"
         verbose_name_plural = "disponibilidades de turnos"
-        ordering = ["sala", "dia_semana", "hora_inicio"]
+        ordering = ["servicio", "sala", "dia_semana", "hora_inicio"]
         constraints = [
             models.UniqueConstraint(
-                fields=["sala", "dia_semana", "hora_inicio", "hora_fin"],
-                name="disponibilidad_unica_por_sala_dia_horario",
+                fields=["servicio", "sala", "dia_semana", "hora_inicio", "hora_fin"],
+                name="disponibilidad_unica_por_servicio_sala_dia_horario",
             )
         ]
 
     def __str__(self):
-        return f"{self.sala} - {self.get_dia_semana_display()} {self.hora_inicio} a {self.hora_fin}"
+        return f"{self.servicio} - {self.sala} - {self.get_dia_semana_display()} {self.hora_inicio} a {self.hora_fin}"
 
 
 class Turno(BasicModel):
@@ -162,6 +160,7 @@ class Turno(BasicModel):
             models.UniqueConstraint(
                 fields=["sala", "fecha", "hora"],
                 name="turno_unico_por_sala_fecha_hora",
+                condition=~models.Q(estado="cancelado"),
             )
         ]
 
