@@ -239,9 +239,22 @@ footer a:hover {
   }
 }
 
+.home-hero-carousel,
+.home-hero-carousel .carousel-inner,
+.home-hero-carousel .carousel-item {
+  height: var(--home-hero-height, calc(100dvh - 56px));
+}
+
+.home-hero-carousel .carousel-caption {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  text-align: center;
+}
+
 /* line 1, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/_home.scss */
 .carousel-img {
-  height: 500px;
+  height: 100%;
   object-fit: cover;
   filter: brightness(60%);
 }
@@ -258,10 +271,6 @@ footer a:hover {
 }
 
 @media (max-width: 768px) {
-  /* line 19, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/_home.scss */
-  .carousel-img {
-    height: 320px;
-  }
   /* line 24, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/_home.scss */
   .carousel-caption h1 {
     font-size: 2rem;

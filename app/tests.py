@@ -475,6 +475,7 @@ class AnimacionCarritoYAdminTests(TestCase):
             contenido.index("ScrollTrigger.min.js"),
         )
         self.assertContains(response, "js-scroll-section")
+        self.assertContains(response, "home-hero-carousel")
 
     def test_catalogo_incluye_la_misma_animacion(self):
         response = self.client.get(reverse("listar_catalogo"))

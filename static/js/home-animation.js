@@ -1,6 +1,24 @@
 (function () {
     "use strict";
 
+    const hero = document.querySelector(".home-hero-carousel");
+    if (hero) {
+        const updateHeroHeight = () => {
+            const navbar = document.querySelector("body > .navbar");
+            const navbarHeight = navbar ? navbar.getBoundingClientRect().height : 0;
+            hero.style.setProperty(
+                "--home-hero-height",
+                `${Math.max(0, window.innerHeight - navbarHeight)}px`
+            );
+        };
+
+        updateHeroHeight();
+        window.addEventListener("resize", updateHeroHeight);
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener("resize", updateHeroHeight);
+        }
+    }
+
     if (
         typeof window.gsap === "undefined"
         || typeof window.ScrollTrigger === "undefined"
