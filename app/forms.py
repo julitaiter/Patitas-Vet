@@ -67,7 +67,7 @@ class ItemCatalogoForm(BootstrapFormMixin, ModelForm):
 class ServicioForm(ItemCatalogoForm):
     class Meta(ItemCatalogoForm.Meta):
         model = Servicio
-        fields = ItemCatalogoForm.Meta.fields + ["sala", "duracion_minutos"]
+        fields = ItemCatalogoForm.Meta.fields + ["duracion_minutos"]
 
 
 class ProductoForm(ItemCatalogoForm):
@@ -100,6 +100,7 @@ class DisponibilidadTurnoForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = DisponibilidadTurno
         fields = [
+            "servicio",
             "sala",
             "dias_semana",
             "hora_inicio",
@@ -116,7 +117,12 @@ class DisponibilidadTurnoForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.aplicar_clases_bootstrap()
-        self.fields["sala"].queryset = Sala.objects.order_by("nombre")
+        self.fields["servicio"].queryset = Servicio.objects.filter(
+            activo=True
+        ).order_by("nombre")
+        self.fields["sala"].queryset = Sala.objects.filter(
+            activa=True
+        ).order_by("nombre")
         self.fields["hora_inicio"].input_formats = ["%H:%M"]
         self.fields["hora_fin"].input_formats = ["%H:%M"]
         if self.instance.pk and not self.is_bound:
@@ -130,12 +136,13 @@ class DisponibilidadTurnoForm(BootstrapFormMixin, forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        servicio = cleaned_data.get("servicio")
         sala = cleaned_data.get("sala")
         dias_semana = [int(dia) for dia in cleaned_data.get("dias_semana", [])]
         hora_inicio = cleaned_data.get("hora_inicio")
         hora_fin = cleaned_data.get("hora_fin")
 
-        if not all((sala, dias_semana, hora_inicio, hora_fin)):
+        if not all((servicio, sala, dias_semana, hora_inicio, hora_fin)):
             return cleaned_data
 
         if hora_inicio >= hora_fin:
@@ -143,6 +150,7 @@ class DisponibilidadTurnoForm(BootstrapFormMixin, forms.ModelForm):
             return cleaned_data
 
         superpuestas = DisponibilidadTurno.objects.filter(
+            servicio=servicio,
             sala=sala,
             dia_semana__in=dias_semana,
             hora_inicio__lt=hora_fin,
@@ -178,6 +186,7 @@ class DisponibilidadTurnoForm(BootstrapFormMixin, forms.ModelForm):
             if dia == dia_principal:
                 continue
             disponibilidades.append(DisponibilidadTurno.objects.create(
+                servicio=instance.servicio,
                 sala=instance.sala,
                 dia_semana=dia,
                 hora_inicio=instance.hora_inicio,
@@ -221,8 +230,7 @@ class TurnoForm(forms.ModelForm):
         if self.servicio and fecha_str:
             try:
                 fecha = datetime.strptime(fecha_str, "%Y-%m-%d").date()
-                horarios = obtener_horarios_disponibles(
-                    self.servicio.sala, fecha)
+                horarios = obtener_horarios_disponibles(self.servicio, fecha)
 
                 if horarios:
                     self.fields["hora"].choices = [
@@ -250,7 +258,7 @@ class TurnoForm(forms.ModelForm):
         hora = cleaned_data.get("hora")
 
         if self.servicio and fecha and hora:
-            if not turno_esta_disponible(self.servicio.sala, fecha, hora):
+            if not turno_esta_disponible(self.servicio, fecha, hora):
                 raise forms.ValidationError(
                     "El horario seleccionado no está disponible."
                 )
@@ -292,18 +300,14 @@ class TurnoEmpleadoForm(forms.ModelForm):
         hora = cleaned_data.get("hora")
 
         if servicio and fecha and hora:
-            qs = Turno.objects.filter(
-                sala=servicio.sala,
-                fecha=fecha,
-                hora=hora,
-            ).exclude(estado=Turno.ESTADO_CANCELADO)
-
-            if self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
-
-            if qs.exists():
+            if not turno_esta_disponible(
+                servicio,
+                fecha,
+                hora,
+                exclude_turno_id=self.instance.pk,
+            ):
                 raise forms.ValidationError(
-                    "Ya existe un turno para la sala de este servicio en esa fecha y horario."
+                    "No hay salas disponibles para el servicio en esa fecha y horario."
                 )
 
         return cleaned_data

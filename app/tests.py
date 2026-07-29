@@ -1,11 +1,17 @@
+from datetime import date, time
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
-from .forms import DisponibilidadTurnoForm
-from .models import Categoria, DisponibilidadTurno, Producto, Sala, Servicio
+from .forms import DisponibilidadTurnoForm, TurnoForm
+from .models import Categoria, DisponibilidadTurno, Producto, Sala, Servicio, Turno
+from .services.turnos import (
+    obtener_horarios_disponibles,
+    obtener_sala_disponible_para_turno,
+    obtener_salas_disponibles_para_turno,
+)
 
 
 class CatalogoShoppingTests(TestCase):
@@ -156,8 +162,16 @@ class GestionSalasTests(TestCase):
             username="cliente-sin-permisos",
             password="clave-segura-123",
         )
+        categoria = Categoria.objects.create(nombre="Servicios veterinarios")
+        cls.servicio = Servicio.objects.create(
+            nombre="Consulta general",
+            descripcion="Consulta veterinaria",
+            precio=Decimal("1000.00"),
+            categoria=categoria,
+        )
         cls.sala = Sala.objects.create(nombre="Consultorio 1")
         cls.disponibilidad = DisponibilidadTurno.objects.create(
+            servicio=cls.servicio,
             sala=cls.sala,
             dia_semana=DisponibilidadTurno.DIA_LUNES,
             hora_inicio="09:00",
@@ -196,6 +210,7 @@ class GestionSalasTests(TestCase):
         })
         sala = Sala.objects.get(nombre="Quirófano")
         disponibilidad_response = self.client.post(reverse("nueva_disponibilidad"), {
+            "servicio": self.servicio.pk,
             "sala": sala.pk,
             "dias_semana": [
                 DisponibilidadTurno.DIA_MARTES,
@@ -232,6 +247,7 @@ class GestionSalasTests(TestCase):
 
     def test_formulario_rechaza_horarios_superpuestos(self):
         form = DisponibilidadTurnoForm(data={
+            "servicio": self.servicio.pk,
             "sala": self.sala.pk,
             "dias_semana": [DisponibilidadTurno.DIA_LUNES],
             "hora_inicio": "11:00",
@@ -248,6 +264,7 @@ class GestionSalasTests(TestCase):
         response = self.client.post(
             reverse("editar_disponibilidad", kwargs={"pk": self.disponibilidad.pk}),
             {
+                "servicio": self.servicio.pk,
                 "sala": self.sala.pk,
                 "dias_semana": [
                     DisponibilidadTurno.DIA_LUNES,
@@ -269,13 +286,13 @@ class GestionSalasTests(TestCase):
         )
 
     def test_no_elimina_sala_vinculada_a_un_servicio(self):
-        categoria = Categoria.objects.create(nombre="Consultas")
-        Servicio.objects.create(
-            nombre="Consulta general",
-            descripcion="Consulta",
-            precio=Decimal("1000.00"),
-            categoria=categoria,
+        Turno.objects.create(
+            usuario=self.cliente,
+            servicio=self.servicio,
             sala=self.sala,
+            fecha=date(2026, 7, 27),
+            hora=time(9, 0),
+            mascota="Luna",
         )
         self.client.force_login(self.staff)
 
@@ -286,3 +303,142 @@ class GestionSalasTests(TestCase):
 
         self.assertTrue(Sala.objects.filter(pk=self.sala.pk).exists())
         self.assertContains(response, "No se puede eliminar la sala")
+
+
+class TurnosMultiSalaTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.fecha_lunes = date(2026, 7, 27)
+        cls.usuario = get_user_model().objects.create_user(
+            username="turnos-cliente",
+            password="clave-segura-123",
+        )
+        categoria = Categoria.objects.create(nombre="Atención veterinaria")
+        cls.consulta = Servicio.objects.create(
+            nombre="Consulta veterinaria",
+            descripcion="Consulta general",
+            precio=Decimal("12000.00"),
+            categoria=categoria,
+        )
+        cls.vacunacion = Servicio.objects.create(
+            nombre="Vacunación",
+            descripcion="Aplicación de vacunas",
+            precio=Decimal("8000.00"),
+            categoria=categoria,
+        )
+        cls.sala_a = Sala.objects.create(nombre="Sala A")
+        cls.sala_b = Sala.objects.create(nombre="Sala B")
+        for sala in (cls.sala_a, cls.sala_b):
+            DisponibilidadTurno.objects.create(
+                servicio=cls.consulta,
+                sala=sala,
+                dia_semana=DisponibilidadTurno.DIA_LUNES,
+                hora_inicio=time(9, 0),
+                hora_fin=time(12, 0),
+                intervalo_minutos=30,
+            )
+        DisponibilidadTurno.objects.create(
+            servicio=cls.vacunacion,
+            sala=cls.sala_a,
+            dia_semana=DisponibilidadTurno.DIA_LUNES,
+            hora_inicio=time(9, 0),
+            hora_fin=time(12, 0),
+            intervalo_minutos=30,
+        )
+
+    def crear_turno(self, sala, hora, servicio=None, estado=Turno.ESTADO_PENDIENTE):
+        return Turno.objects.create(
+            usuario=self.usuario,
+            servicio=servicio or self.consulta,
+            sala=sala,
+            fecha=self.fecha_lunes,
+            hora=hora,
+            mascota="Luna",
+            estado=estado,
+        )
+
+    def test_horario_aparece_una_vez_aunque_haya_dos_salas(self):
+        horarios = obtener_horarios_disponibles(self.consulta, self.fecha_lunes)
+
+        self.assertEqual(horarios.count(time(9, 0)), 1)
+        self.assertEqual(
+            set(obtener_salas_disponibles_para_turno(
+                self.consulta, self.fecha_lunes, time(9, 0)
+            )),
+            {self.sala_a, self.sala_b},
+        )
+
+    def test_asigna_la_unica_sala_libre(self):
+        self.crear_turno(self.sala_a, time(9, 30))
+
+        sala = obtener_sala_disponible_para_turno(
+            self.consulta, self.fecha_lunes, time(9, 30)
+        )
+
+        self.assertEqual(sala, self.sala_b)
+        self.assertIn(time(9, 30), obtener_horarios_disponibles(
+            self.consulta, self.fecha_lunes
+        ))
+
+    def test_no_ofrece_horario_si_todas_las_salas_estan_ocupadas(self):
+        self.crear_turno(self.sala_a, time(10, 0))
+        self.crear_turno(self.sala_b, time(10, 0))
+
+        self.assertNotIn(time(10, 0), obtener_horarios_disponibles(
+            self.consulta, self.fecha_lunes
+        ))
+        form = TurnoForm(data={
+            "fecha": self.fecha_lunes.isoformat(),
+            "hora": "10:00",
+            "mascota": "Milo",
+            "observaciones": "",
+        }, servicio=self.consulta)
+        self.assertFalse(form.is_valid())
+
+    def test_ocupacion_de_otro_servicio_bloquea_la_misma_sala(self):
+        self.crear_turno(
+            self.sala_a,
+            time(10, 30),
+            servicio=self.consulta,
+        )
+
+        self.assertEqual(
+            obtener_salas_disponibles_para_turno(
+                self.vacunacion, self.fecha_lunes, time(10, 30)
+            ),
+            [],
+        )
+
+    def test_turno_cancelado_no_bloquea_sala(self):
+        self.crear_turno(
+            self.sala_a,
+            time(11, 0),
+            estado=Turno.ESTADO_CANCELADO,
+        )
+
+        salas = obtener_salas_disponibles_para_turno(
+            self.consulta, self.fecha_lunes, time(11, 0)
+        )
+        self.assertIn(self.sala_a, salas)
+        nuevo_turno = self.crear_turno(
+            self.sala_a,
+            time(11, 0),
+            servicio=self.vacunacion,
+        )
+        self.assertIsNotNone(nuevo_turno.pk)
+
+    def test_solicitud_asigna_sala_sin_pedirla_al_cliente(self):
+        self.client.force_login(self.usuario)
+        response = self.client.post(
+            reverse("solicitar_turno", kwargs={"servicio_pk": self.consulta.pk}),
+            {
+                "fecha": self.fecha_lunes.isoformat(),
+                "hora": "11:30",
+                "mascota": "Nina",
+                "observaciones": "",
+            },
+        )
+
+        self.assertRedirects(response, reverse("mis_turnos"))
+        turno = Turno.objects.get(mascota="Nina")
+        self.assertIn(turno.sala, {self.sala_a, self.sala_b})

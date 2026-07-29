@@ -376,6 +376,7 @@ class SalaAdmin(BasicAdminMixin, admin.ModelAdmin):
 @admin.register(DisponibilidadTurno)
 class DisponibilidadTurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
     list_display = [
+        "servicio",
         "sala",
         "dia_semana",
         "hora_inicio",
@@ -385,16 +386,19 @@ class DisponibilidadTurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
     ]
 
     list_filter = [
+        "servicio",
         "sala",
         "dia_semana",
         "activa",
     ]
 
     search_fields = [
+        "servicio__nombre",
         "sala__nombre",
     ]
 
     list_select_related = [
+        "servicio",
         "sala",
     ]
 
@@ -403,6 +407,7 @@ class DisponibilidadTurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
     ]
 
     ordering = [
+        "servicio",
         "sala",
         "dia_semana",
         "hora_inicio",
@@ -415,9 +420,10 @@ class DisponibilidadTurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
 
     fieldsets = (
         (
-            "Sala",
+            "Servicio y sala",
             {
                 "fields": (
+                    "servicio",
                     "sala",
                     "activa",
                 )
@@ -497,7 +503,6 @@ class ServicioAdmin(CatalogoAdminMixin, admin.ModelAdmin):
         "imagen_preview",
         "nombre",
         "categoria",
-        "sala",
         "precio",
         "duracion_minutos",
         "activo_icono",
@@ -506,7 +511,6 @@ class ServicioAdmin(CatalogoAdminMixin, admin.ModelAdmin):
 
     list_filter = [
         "categoria",
-        "sala",
         "activo",
         "destacado",
     ]
@@ -515,12 +519,10 @@ class ServicioAdmin(CatalogoAdminMixin, admin.ModelAdmin):
         "nombre",
         "descripcion",
         "categoria__nombre",
-        "sala__nombre",
     ]
 
     list_select_related = [
         "categoria",
-        "sala",
     ]
 
     list_editable = [
@@ -536,7 +538,6 @@ class ServicioAdmin(CatalogoAdminMixin, admin.ModelAdmin):
                     "nombre",
                     "descripcion",
                     "categoria",
-                    "sala",
                     "precio",
                     "duracion_minutos",
                 )
