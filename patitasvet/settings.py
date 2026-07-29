@@ -161,3 +161,5 @@ ACCOUNT_SIGNUP_FIELDS = [
 ]
 
 ACCOUNT_LOGIN_METHODS = {'username', 'email'}
+
+ACCOUNT_ADAPTER = 'app.adapters.AccountAdapter'

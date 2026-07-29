@@ -12,6 +12,26 @@ from .services.turnos import obtener_horarios_disponibles, turno_esta_disponible
 User = get_user_model()
 
 
+class AjustarStockForm(forms.Form):
+    OPERACION_ESTABLECER = "establecer"
+    OPERACION_SUMAR = "sumar"
+    OPERACION_RESTAR = "restar"
+
+    operacion = forms.ChoiceField(
+        choices=[
+            (OPERACION_ESTABLECER, "Establecer stock"),
+            (OPERACION_SUMAR, "Sumar unidades"),
+            (OPERACION_RESTAR, "Restar unidades"),
+        ],
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+    cantidad = forms.IntegerField(
+        min_value=0,
+        widget=forms.NumberInput(attrs={"class": "form-control", "min": 0}),
+        help_text="Al restar, el stock nunca quedará por debajo de cero.",
+    )
+
+
 class BootstrapFormMixin:
     def aplicar_clases_bootstrap(self):
         for field in self.fields.values():

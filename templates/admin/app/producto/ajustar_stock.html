@@ -1,0 +1,32 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+    <form method="post">
+        {% csrf_token %}
+
+        <fieldset class="module aligned">
+            <h2>Productos seleccionados</h2>
+            <ul>
+                {% for producto in productos %}
+                <li>{{ producto.nombre }} — stock actual: {{ producto.stock }}</li>
+                <input type="hidden" name="{{ action_checkbox_name }}" value="{{ producto.pk }}">
+                {% endfor %}
+            </ul>
+        </fieldset>
+
+        <fieldset class="module aligned">
+            <h2>Nuevo ajuste</h2>
+            {{ form.as_p }}
+        </fieldset>
+
+        <input type="hidden" name="action" value="ajustar_stock">
+        <input type="hidden" name="select_across" value="0">
+
+        <div class="submit-row">
+            <a href="{% url 'admin:app_producto_changelist' %}" class="button cancel-link">Cancelar</a>
+            <input type="submit" name="aplicar" value="Aplicar ajuste" class="default">
+        </div>
+    </form>
+</div>
+{% endblock %}

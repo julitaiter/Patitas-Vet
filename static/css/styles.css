@@ -4,6 +4,15 @@ body {
   color: #212529;
 }
 
+.auth-message-toast {
+  position: fixed;
+  top: 5.5rem;
+  right: 1rem;
+  z-index: 1090;
+  width: min(420px, calc(100% - 2rem));
+  box-shadow: 0 0.75rem 2rem rgba(0, 0, 0, 0.18);
+}
+
 /* line 1, ../../Users/Usuario/OneDrive/Documentos/Patitas-Vet/static/scss/_navbar.scss */
 .navbar-brand {
   letter-spacing: 1px;

@@ -68,15 +68,15 @@
     </button>
 </section>
 
-<section class="container my-5">
-    <div class="text-center mb-4">
+<section class="container my-5 js-scroll-section">
+    <div class="text-center mb-4 js-scroll-heading">
         <h2>Servicios destacados</h2>
         <p class="text-muted">
             Todo lo que tu mascota necesita en un solo lugar.
         </p>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-4 js-scroll-items">
         {% for servicio in servicios_destacados %}
         {% include 'catalogo/includes/card_item.html' with item=servicio tipo='servicio' %}
         {% empty %}
@@ -93,8 +93,8 @@
     </div>
 </section>
 
-<section class="container my-5">
-    <div class="row g-4 text-center">
+<section class="container my-5 js-scroll-section">
+    <div class="row g-4 text-center js-scroll-items">
         <div class="col-md-4">
             <div class="p-4 bg-white rounded shadow-sm h-100">
                 <h3 class="h5">Atención profesional</h3>
@@ -125,8 +125,8 @@
 </section>
 
 {% if not user.is_authenticated %}
-<section class="bg-light py-5">
-    <div class="container text-center">
+<section class="bg-light py-5 js-scroll-section">
+    <div class="container text-center js-scroll-heading">
         <h2>Registrate para acceder a beneficios</h2>
         <p class="mb-4">
             Creá tu cuenta para consultar servicios, ver novedades y recibir atención personalizada.
@@ -139,4 +139,10 @@
 </section>
 {% endif %}
 
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="{% static 'js/home-animation.js' %}"></script>
 {% endblock %}

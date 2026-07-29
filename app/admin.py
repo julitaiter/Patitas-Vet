@@ -1,7 +1,13 @@
 from django.contrib import admin, messages
+from django.contrib.admin.helpers import ACTION_CHECKBOX_NAME
+from django.db import transaction
+from django.http import HttpResponseRedirect
+from django.template.response import TemplateResponse
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
+from .forms import AjustarStockForm
 from .models import (
     Categoria,
     DisponibilidadTurno,
@@ -592,6 +598,8 @@ class ProductoAdmin(CatalogoAdminMixin, admin.ModelAdmin):
         "precio",
     ]
 
+    actions = CatalogoAdminMixin.actions + ["ajustar_stock"]
+
     fieldsets = (
         (
             "Datos principales",
@@ -653,6 +661,47 @@ class ProductoAdmin(CatalogoAdminMixin, admin.ModelAdmin):
         return format_html(
             '<span style="background-color: #198754; color: white; padding: 4px 8px; border-radius: 999px; font-size: 12px; font-weight: 600;">{}</span>',
             obj.stock,
+        )
+
+    @admin.action(description="Ajustar stock de los productos seleccionados", permissions=["change"])
+    def ajustar_stock(self, request, queryset):
+        if "aplicar" in request.POST:
+            form = AjustarStockForm(request.POST)
+            if form.is_valid():
+                operacion = form.cleaned_data["operacion"]
+                cantidad = form.cleaned_data["cantidad"]
+
+                with transaction.atomic():
+                    for producto in queryset.select_for_update():
+                        if operacion == AjustarStockForm.OPERACION_ESTABLECER:
+                            producto.stock = cantidad
+                        elif operacion == AjustarStockForm.OPERACION_SUMAR:
+                            producto.stock += cantidad
+                        else:
+                            producto.stock = max(0, producto.stock - cantidad)
+                        producto.save(update_fields=["stock", "updated_at"])
+
+                self.message_user(
+                    request,
+                    f"Stock actualizado en {queryset.count()} producto(s).",
+                    level=messages.SUCCESS,
+                )
+                return HttpResponseRedirect(reverse("admin:app_producto_changelist"))
+        else:
+            form = AjustarStockForm()
+
+        context = {
+            **self.admin_site.each_context(request),
+            "title": "Ajustar stock",
+            "form": form,
+            "productos": queryset,
+            "action_checkbox_name": ACTION_CHECKBOX_NAME,
+            "opts": self.model._meta,
+        }
+        return TemplateResponse(
+            request,
+            "admin/app/producto/ajustar_stock.html",
+            context,
         )
 
 

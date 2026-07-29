@@ -1,6 +1,8 @@
 from datetime import date, time
 from decimal import Decimal
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -442,3 +444,103 @@ class TurnosMultiSalaTests(TestCase):
         self.assertRedirects(response, reverse("mis_turnos"))
         turno = Turno.objects.get(mascota="Nina")
         self.assertIn(turno.sala, {self.sala_a, self.sala_b})
+
+
+class AnimacionCarritoYAdminTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = get_user_model().objects.create_superuser(
+            username="admin-stock",
+            email="admin@example.com",
+            password="clave-segura-123",
+        )
+        categoria = Categoria.objects.create(nombre="Accesorios")
+        cls.producto = Producto.objects.create(
+            nombre="Correa",
+            descripcion="Correa resistente",
+            precio=Decimal("4500.00"),
+            categoria=categoria,
+            stock=3,
+        )
+
+    def test_home_incluye_gsap_scrolltrigger_y_animacion(self):
+        response = self.client.get(reverse("index"))
+        contenido = response.content.decode()
+
+        self.assertContains(response, "gsap@3.13.0/dist/gsap.min.js")
+        self.assertContains(response, "gsap@3.13.0/dist/ScrollTrigger.min.js")
+        self.assertContains(response, "js/home-animation.js")
+        self.assertLess(
+            contenido.index("gsap.min.js"),
+            contenido.index("ScrollTrigger.min.js"),
+        )
+        self.assertContains(response, "js-scroll-section")
+
+    def test_catalogo_incluye_la_misma_animacion(self):
+        response = self.client.get(reverse("listar_catalogo"))
+
+        self.assertContains(response, "gsap@3.13.0/dist/gsap.min.js")
+        self.assertContains(response, "gsap@3.13.0/dist/ScrollTrigger.min.js")
+        self.assertContains(response, "js/home-animation.js")
+        self.assertContains(response, "js-scroll-section")
+        self.assertContains(response, "js-scroll-items")
+
+    def test_carrito_declara_vida_de_una_hora(self):
+        cart_js = (
+            Path(settings.BASE_DIR) / "static" / "js" / "cart.js"
+        ).read_text(encoding="utf-8")
+
+        self.assertIn("const CART_LIFETIME_MS = 60 * 60 * 1000", cart_js)
+        self.assertIn("patitasVetCartExpiresAt", cart_js)
+        self.assertIn("Date.now() >= expiresAt", cart_js)
+        self.assertIn("window.setTimeout", cart_js)
+
+    def test_accion_admin_usa_pagina_intermedia_y_actualiza_stock(self):
+        self.client.force_login(self.superuser)
+        url = reverse("admin:app_producto_changelist")
+        seleccion = {
+            "action": "ajustar_stock",
+            "_selected_action": [self.producto.pk],
+            "select_across": "0",
+        }
+
+        intermedia = self.client.post(url, seleccion)
+        self.assertEqual(intermedia.status_code, 200)
+        self.assertTemplateUsed(
+            intermedia,
+            "admin/app/producto/ajustar_stock.html",
+        )
+        self.assertContains(intermedia, "Ajustar stock")
+
+        aplicada = self.client.post(url, {
+            **seleccion,
+            "operacion": "sumar",
+            "cantidad": 5,
+            "aplicar": "Aplicar ajuste",
+        })
+        self.assertRedirects(aplicada, url)
+        self.producto.refresh_from_db()
+        self.assertEqual(self.producto.stock, 8)
+
+
+class MensajesAutenticacionTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.user = get_user_model().objects.create_user(
+            username="usuario-mensajes",
+            password="clave-segura-123",
+        )
+
+    def test_inicio_y_cierre_de_sesion_muestran_mensaje_flotante(self):
+        login_response = self.client.post(reverse("account_login"), {
+            "login": self.user.username,
+            "password": "clave-segura-123",
+        }, follow=True)
+
+        self.assertContains(login_response, "auth-message-toast")
+        self.assertContains(login_response, 'data-auto-dismiss-ms="3000"')
+
+        logout_response = self.client.post(reverse("account_logout"), follow=True)
+
+        self.assertContains(logout_response, "auth-message-toast")
+        self.assertContains(logout_response, 'data-auto-dismiss-ms="3000"')

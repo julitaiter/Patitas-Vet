@@ -2,18 +2,77 @@
     "use strict";
 
     const STORAGE_KEY = "patitasVetCart";
+    const EXPIRATION_KEY = "patitasVetCartExpiresAt";
+    const CART_LIFETIME_MS = 60 * 60 * 1000;
+    let cartExpired = false;
+    let expirationTimer = null;
+
+    function clearStoredCart() {
+        if (expirationTimer) {
+            window.clearTimeout(expirationTimer);
+            expirationTimer = null;
+        }
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(EXPIRATION_KEY);
+    }
+
+    function scheduleExpiration(expiresAt) {
+        if (expirationTimer) {
+            window.clearTimeout(expirationTimer);
+        }
+        expirationTimer = window.setTimeout(() => {
+            clearStoredCart();
+            cartExpired = true;
+            updateCartCount();
+            renderCartPage();
+        }, Math.max(0, expiresAt - Date.now()));
+    }
 
     function getCart() {
         try {
             const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-            return Array.isArray(value) ? value.filter((item) => item && Number(item.id)) : [];
+            if (!Array.isArray(value)) {
+                clearStoredCart();
+                return [];
+            }
+
+            if (!value.length) {
+                clearStoredCart();
+                return [];
+            }
+
+            let expiresAt = Number(localStorage.getItem(EXPIRATION_KEY));
+            if (!expiresAt) {
+                expiresAt = Date.now() + CART_LIFETIME_MS;
+                localStorage.setItem(EXPIRATION_KEY, String(expiresAt));
+            }
+
+            if (Date.now() >= expiresAt) {
+                clearStoredCart();
+                cartExpired = true;
+                return [];
+            }
+
+            scheduleExpiration(expiresAt);
+            return value.filter((item) => item && Number(item.id));
         } catch (error) {
+            clearStoredCart();
             return [];
         }
     }
 
     function saveCart(cart) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+        if (cart.length) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
+            localStorage.setItem(
+                EXPIRATION_KEY,
+                String(Date.now() + CART_LIFETIME_MS)
+            );
+            scheduleExpiration(Number(localStorage.getItem(EXPIRATION_KEY)));
+            cartExpired = false;
+        } else {
+            clearStoredCart();
+        }
         updateCartCount();
     }
 
@@ -22,7 +81,10 @@
     }
 
     function updateCartCount() {
-        $("#cart-count").text(getCartTotalItems());
+        const total = getCartTotalItems();
+        $("#cart-count")
+            .text(total)
+            .toggleClass("d-none", total === 0);
     }
 
     function stockUrl(productId) {
@@ -157,7 +219,11 @@
         if (!$page.length) return;
         const cart = getCart();
         if (!cart.length) {
-            $page.html('<div class="text-center border rounded p-5 bg-light"><i class="bi bi-cart3 display-5 text-secondary"></i><h2 class="h4 mt-3">Tu carrito está vacío</h2><p class="text-muted mb-0">Agregá productos desde el catálogo.</p></div>');
+            const message = cartExpired
+                ? "El carrito venció después de una hora sin actividad."
+                : "Agregá productos desde el catálogo.";
+            $page.html(`<div class="text-center border rounded p-5 bg-light"><i class="bi bi-cart3 display-5 text-secondary"></i><h2 class="h4 mt-3">Tu carrito está vacío</h2><p class="text-muted mb-0">${message}</p></div>`);
+            cartExpired = false;
             return;
         }
 
@@ -209,6 +275,7 @@
     window.PatitasVetCart = {
         getCart, saveCart, getCartTotalItems, updateCartCount, validateStock,
         addProductToCart, removeProductFromCart, clearCart,
-        changeProductQuantity, renderCartPage, formatMoney
+        changeProductQuantity, renderCartPage, formatMoney,
+        CART_LIFETIME_MS
     };
 })(jQuery);
