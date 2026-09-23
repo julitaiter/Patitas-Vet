@@ -1,90 +1,92 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}Catálogo | Patitas Vet{% endblock %}
+{% block page_name %}catalogo{% endblock %}
 
 {% block content %}
-
-<section class="container my-5">
-    <div class="text-center mb-5 js-scroll-section">
-        <div class="js-scroll-heading">
-        <h1>Servicios y productos</h1>
-        <p class="text-muted">
-            Conocé nuestras opciones para el cuidado de tu mascota.
-        </p>
+<section class="page-hero compact">
+    <div class="container">
+        <div class="page-hero-card reveal">
+            <span class="eyebrow">Catálogo</span>
+            <div class="d-lg-flex justify-content-between align-items-end gap-4">
+                <div>
+                    <h1>Todo lo que tu mascota necesita</h1>
+                    <p>Explorá servicios y productos desde un catálogo simple, claro y actualizado.</p>
+                </div>
+                {% if user.is_staff %}
+                    <div class="d-flex gap-2 mt-3 mt-lg-0">
+                        <a href="{% url 'nuevo_item' model='servicio' %}" class="btn btn-soft"><i class="bi bi-plus-lg"></i> Servicio</a>
+                        <a href="{% url 'nuevo_item' model='producto' %}" class="btn btn-primary-app"><i class="bi bi-plus-lg"></i> Producto</a>
+                    </div>
+                {% endif %}
+            </div>
         </div>
-    </div>
-
-    <form method="get" class="row g-3 mb-5 js-scroll-section js-scroll-items">
-        <div class="col-md-6">
-            <input type="text" name="q" class="form-control" placeholder="Buscar por nombre o descripción"
-                value="{{ query }}">
-        </div>
-
-        <div class="col-md-4">
-            <select name="categoria" class="form-select">
-                <option value="">Todas las categorías</option>
-
-                {% for categoria in categorias %}
-                <option value="{{ categoria.id }}" {% if categoria_id == categoria.id %}selected{% endif %}>
-                    {{ categoria.nombre }}
-                </option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="col-md-2 d-grid">
-            <button type="submit" class="btn btn-success">
-                Buscar
-            </button>
-        </div>
-    </form>
-
-    <div class="js-scroll-section">
-    <div class="catalogo-header js-scroll-heading">
-        <h2 class="mb-0">Servicios</h2>
-
-        {% if user.is_staff %}
-        <a href="{% url 'nuevo_item' model='servicio' %}" class="btn btn-primary">
-            Agregar servicio
-        </a>
-        {% endif %}
-    </div>
-
-    <div class="row g-4 mb-5 js-scroll-items">
-        {% for servicio in servicios %}
-        {% include 'catalogo/includes/card_item.html' with item=servicio tipo='servicio' %}
-        {% empty %}
-        <p class="text-muted">No hay servicios cargados.</p>
-        {% endfor %}
-    </div>
-    </div>
-
-    <div class="js-scroll-section">
-    <div class="catalogo-header js-scroll-heading">
-        <h2 class="mb-0">Productos</h2>
-
-        {% if user.is_staff %}
-        <a href="{% url 'nuevo_item' model='producto' %}" class="btn btn-primary">
-            Agregar producto
-        </a>
-        {% endif %}
-    </div>
-
-    <div class="row g-4 js-scroll-items">
-        {% for producto in productos %}
-        {% include 'catalogo/includes/card_item.html' with item=producto tipo='producto' %}
-        {% empty %}
-        <p class="text-muted">No hay productos cargados.</p>
-        {% endfor %}
-    </div>
     </div>
 </section>
 
-{% endblock %}
+<section class="section-space pt-4">
+    <div class="container">
+        <form method="get" class="filter-panel reveal">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-6">
+                    <label class="form-label">Buscar</label>
+                    <div class="input-icon-wrap">
+                        <i class="bi bi-search"></i>
+                        <input type="search" name="q" value="{{ query }}" class="form-control" placeholder="Nombre o descripción">
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <label class="form-label">Categoría</label>
+                    <select name="categoria" class="form-select">
+                        <option value="">Todas las categorías</option>
+                        {% for categoria in categorias %}
+                            <option value="{{ categoria.id }}" {% if categoria_id == categoria.id %}selected{% endif %}>{{ categoria.nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-2 d-grid">
+                    <button class="btn btn-primary-app" type="submit">Aplicar filtros</button>
+                </div>
+            </div>
+        </form>
 
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
-<script src="{% static 'js/home-animation.js' %}"></script>
+        <div class="catalog-section reveal">
+            <div class="section-heading section-heading-sm">
+                <div>
+                    <span class="eyebrow">Servicios</span>
+                    <h2>Atención y bienestar</h2>
+                </div>
+                <span class="result-count">{{ servicios|length }} resultado{{ servicios|length|pluralize }}</span>
+            </div>
+            <div class="row g-4">
+                {% for item in servicios %}
+                    <div class="col-md-6 col-xl-4">
+                        {% include 'catalogo/includes/card_item.html' with tipo='servicio' %}
+                    </div>
+                {% empty %}
+                    <div class="col-12"><div class="empty-state"><i class="bi bi-search-heart"></i><h3>No encontramos servicios</h3><p>Probá cambiar los filtros.</p></div></div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="catalog-section reveal">
+            <div class="section-heading section-heading-sm">
+                <div>
+                    <span class="eyebrow">Productos</span>
+                    <h2>Selección para cada día</h2>
+                </div>
+                <span class="result-count">{{ productos|length }} resultado{{ productos|length|pluralize }}</span>
+            </div>
+            <div class="row g-4">
+                {% for item in productos %}
+                    <div class="col-md-6 col-xl-4">
+                        {% include 'catalogo/includes/card_item.html' with tipo='producto' %}
+                    </div>
+                {% empty %}
+                    <div class="col-12"><div class="empty-state"><i class="bi bi-bag-heart"></i><h3>No encontramos productos</h3><p>Probá cambiar los filtros.</p></div></div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}

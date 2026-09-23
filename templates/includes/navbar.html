@@ -1,0 +1,75 @@
+<nav class="navbar navbar-expand-xl app-navbar sticky-top" aria-label="Navegación principal">
+    <div class="container py-2">
+        <a class="navbar-brand brand-lockup" href="{% url 'index' %}" aria-label="Patitas Vet - Inicio">
+            <span class="brand-mark"><i class="bi bi-heart-pulse-fill"></i></span>
+            <span class="brand-copy">
+                <strong>Patitas Vet</strong>
+                <small>Cuidado que acompaña</small>
+            </span>
+        </a>
+
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Abrir menú">
+            <i class="bi bi-list fs-2"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav me-xl-4 mb-3 mb-xl-0 gap-xl-1">
+                <li class="nav-item"><a class="nav-link" href="{% url 'index' %}">Inicio</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'listar_catalogo' %}">Catálogo</a></li>
+                <li class="nav-item"><a class="nav-link" href="{% url 'contacto:index' %}">Contacto</a></li>
+            </ul>
+
+            <div class="navbar-search-wrap mx-xl-auto mb-3 mb-xl-0">
+                <div class="navbar-search-shell">
+                    <i class="bi bi-search"></i>
+                    <input
+                        type="search"
+                        id="navbar-catalog-search"
+                        class="form-control"
+                        placeholder="Buscar productos o servicios..."
+                        autocomplete="off"
+                        data-search-url="{% url 'buscar_catalogo_ajax' %}"
+                        aria-label="Buscar en el catálogo"
+                    >
+                    <span class="search-hint">⌘K</span>
+                </div>
+            </div>
+
+            <div class="navbar-actions d-flex align-items-center gap-2 ms-xl-4">
+                <a href="{% url 'ver_carrito' %}" class="nav-action-btn position-relative" aria-label="Ver carrito">
+                    <i class="bi bi-bag-heart"></i>
+                    <span class="cart-badge" id="cart-count">0</span>
+                </a>
+
+                {% if user.is_authenticated %}
+                    <div class="dropdown">
+                        <button class="user-menu-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="user-avatar">{{ user.username|first|upper }}</span>
+                            <span class="user-copy d-none d-lg-flex">
+                                <small>Hola</small>
+                                <strong>{{ user.first_name|default:user.username }}</strong>
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end app-dropdown mt-2">
+                            <li><h6 class="dropdown-header">Tu cuenta</h6></li>
+                            <li><a class="dropdown-item" href="{% url 'mi_perfil' %}"><i class="bi bi-person-circle"></i> Mi perfil</a></li>
+                            <li><a class="dropdown-item" href="{% url 'mis_turnos' %}"><i class="bi bi-calendar2-check"></i> Mis turnos</a></li>
+                            {% if user.is_staff %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Administración</h6></li>
+                                <li><a class="dropdown-item" href="{% url 'gestionar_turnos' %}"><i class="bi bi-calendar3"></i> Gestor de turnos</a></li>
+                                <li><a class="dropdown-item" href="{% url 'gestionar_salas' %}"><i class="bi bi-door-open"></i> Salas</a></li>
+                                <li><a class="dropdown-item" href="/admin/" target="_blank"><i class="bi bi-sliders"></i> Panel admin</a></li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="{% url 'account_logout' %}"><i class="bi bi-box-arrow-right"></i> Cerrar sesión</a></li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <a class="btn btn-soft d-none d-md-inline-flex" href="{% url 'account_login' %}">Ingresar</a>
+                    <a class="btn btn-primary-app" href="{% url 'account_signup' %}">Crear cuenta</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</nav>

@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ servicio.nombre }} | Patitas Vet{% endblock %}
+{% block page_name %}detalle-servicio{% endblock %}
+
+{% block content %}
+<section class="section-space">
+    <div class="container">
+        <a href="{% url 'listar_catalogo' %}" class="back-link"><i class="bi bi-arrow-left"></i> Volver al catálogo</a>
+        <div class="detail-panel reveal">
+            <div class="row g-5 align-items-center">
+                <div class="col-lg-6">
+                    <div class="detail-media">
+                        {% if servicio.imagen %}<img src="{{ servicio.imagen.url }}" alt="{{ servicio.nombre }}">{% else %}<div class="detail-placeholder"><i class="bi bi-heart-pulse"></i></div>{% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <span class="eyebrow">{{ servicio.categoria.nombre }}</span>
+                    <h1 class="detail-title">{{ servicio.nombre }}</h1>
+                    <p class="detail-copy">{{ servicio.descripcion }}</p>
+                    <div class="detail-price-row"><div><small>Valor del servicio</small><strong>${{ servicio.precio }}</strong></div><span class="stock-pill"><i class="bi bi-clock"></i> {{ servicio.duracion_minutos }} min</span></div>
+                    <div class="detail-actions">
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'solicitar_turno' servicio_pk=servicio.pk %}" class="btn btn-primary-app btn-lg"><i class="bi bi-calendar-plus"></i> Solicitar turno</a>
+                        {% else %}
+                            <a href="{% url 'account_login' %}?next={% url 'solicitar_turno' servicio_pk=servicio.pk %}" class="btn btn-primary-app btn-lg"><i class="bi bi-box-arrow-in-right"></i> Ingresar para reservar</a>
+                        {% endif %}
+                        <a href="{% url 'listar_catalogo' %}" class="btn btn-soft btn-lg">Seguir explorando</a>
+                    </div>
+                    <div class="detail-benefits">
+                        <div><i class="bi bi-calendar-check"></i><span><strong>Horarios en tiempo real</strong><small>Elegís entre opciones realmente disponibles.</small></span></div>
+                        <div><i class="bi bi-heart"></i><span><strong>Atención organizada</strong><small>El sistema asigna automáticamente una sala disponible.</small></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

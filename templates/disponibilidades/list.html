@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Disponibilidades | Patitas Vet{% endblock %}
+{% block page_name %}disponibilidades{% endblock %}
+{% block content %}
+<section class="page-hero compact">
+    <div class="container">
+        <div class="page-hero-card reveal"><span class="eyebrow">Administración</span>
+            <div class="d-md-flex justify-content-between align-items-end gap-4">
+                <div>
+                    <h1>Disponibilidades</h1>
+                    <p>Definí cuándo y dónde puede prestarse cada servicio.</p>
+                </div><a href="{% url 'nueva_disponibilidad' %}" class="btn btn-primary-app mt-3 mt-md-0"><i
+                        class="bi bi-plus-lg"></i> Nueva disponibilidad</a>
+            </div>
+        </div>
+    </div>
+</section>
+<section class="section-space pt-4">
+    <div class="container">
+        <form method="get" class="filter-panel reveal">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-3"><label class="form-label">Servicio</label><select name="servicio"
+                        class="form-select">
+                        <option value="">Todos</option>{% for servicio in servicios %}<option value="{{ servicio.id }}"
+                            {% if servicio_id==servicio.id %}selected{% endif %}>{{ servicio.nombre }}</option>{% endfor
+                        %}
+                    </select></div>
+                <div class="col-lg-3"><label class="form-label">Sala</label><select name="sala" class="form-select">
+                        <option value="">Todas</option>{% for sala in salas %}<option value="{{ sala.id }}" {% if
+                            sala_id==sala.id %}selected{% endif %}>{{ sala.nombre }}</option>{% endfor %}
+                    </select></div>
+                <div class="col-lg-2"><label class="form-label">Día</label><select name="dia_semana"
+                        class="form-select">
+                        <option value="">Todos</option>{% for value,label in dias_semana %}<option value="{{ value }}"
+                            {% if dia_semana==value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select></div>
+                <div class="col-lg-2"><label class="form-label">Estado</label><select name="activa" class="form-select">
+                        <option value="">Todas</option>
+                        <option value="1" {% if activa=='1' %}selected{% endif %}>Activas</option>
+                        <option value="0" {% if activa=='0' %}selected{% endif %}>Inactivas</option>
+                    </select></div>
+                <div class="col-lg-2 d-grid"><button class="btn btn-primary-app" type="submit">Filtrar</button></div>
+                <div class="col-12"><a class="text-link small" href="{% url 'gestionar_salas' %}">Limpiar
+                        filtros</a></div>
+            </div>
+        </form>
+        <div class="data-card reveal">
+            <div class="table-responsive">
+                <table class="table modern-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Servicio</th>
+                            <th>Sala</th>
+                            <th>Día</th>
+                            <th>Horario</th>
+                            <th>Intervalo</th>
+                            <th>Estado</th>
+                            <th class="text-end">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>{% for disponibilidad in disponibilidades %}<tr>
+                            <td><strong>{{ disponibilidad.servicio.nombre }}</strong></td>
+                            <td>{{ disponibilidad.sala.nombre }}</td>
+                            <td>{{ disponibilidad.get_dia_semana_display }}</td>
+                            <td>{{ disponibilidad.hora_inicio|time:'H:i' }} – {{ disponibilidad.hora_fin|time:'H:i' }}
+                            </td>
+                            <td>{{ disponibilidad.intervalo_minutos }} min</td>
+                            <td><span
+                                    class="status-badge {% if disponibilidad.activa %}status-confirmado{% else %}status-cancelado{% endif %}">{%
+                                    if disponibilidad.activa %}Activa{% else %}Inactiva{% endif %}</span></td>
+                            <td class="text-end">
+                                <div class="table-actions"><a class="icon-btn"
+                                        href="{% url 'editar_disponibilidad' pk=disponibilidad.pk %}" title="Editar"><i
+                                            class="bi bi-pencil"></i></a><a class="icon-btn icon-btn-danger"
+                                        href="{% url 'eliminar_disponibilidad' pk=disponibilidad.pk %}"
+                                        title="Eliminar"><i class="bi bi-trash"></i></a></div>
+                            </td>
+                        </tr>{% empty %}<tr>
+                            <td colspan="7">
+                                <div class="empty-state compact"><i class="bi bi-clock-history"></i>
+                                    <h3>No hay disponibilidades</h3>
+                                    <p>Creá una para habilitar horarios de reserva.</p>
+                                </div>
+                            </td>
+                        </tr>{% endfor %}</tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

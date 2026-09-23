@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ producto.nombre }} | Patitas Vet{% endblock %}
+{% block page_name %}detalle-producto{% endblock %}
+
+{% block content %}
+<section class="section-space">
+    <div class="container">
+        <a href="{% url 'listar_catalogo' %}" class="back-link"><i class="bi bi-arrow-left"></i> Volver al catálogo</a>
+        <div class="detail-panel reveal">
+            <div class="row g-5 align-items-center">
+                <div class="col-lg-6">
+                    <div class="detail-media">
+                        {% if producto.imagen %}<img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">{% else %}<div class="detail-placeholder"><i class="bi bi-bag-heart"></i></div>{% endif %}
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <span class="eyebrow">{{ producto.categoria.nombre }}</span>
+                    <h1 class="detail-title">{{ producto.nombre }}</h1>
+                    <p class="detail-copy">{{ producto.descripcion }}</p>
+                    <div class="detail-price-row"><div><small>Precio</small><strong>${{ producto.precio }}</strong></div><span class="stock-pill {% if producto.stock <= 0 %}is-out{% endif %}"><i class="bi bi-box-seam"></i> {% if producto.stock <= 0 %}Sin stock{% else %}{{ producto.stock }} disponibles{% endif %}</span></div>
+                    <div class="detail-actions">
+                        <button
+                            type="button"
+                            class="btn btn-primary-app btn-lg js-add-to-cart"
+                            data-product-id="{{ producto.id }}"
+                            data-stock-url="{% url 'validar_stock_producto' pk=producto.id %}"
+                            {% if producto.stock <= 0 %}disabled{% endif %}
+                        ><i class="bi bi-bag-plus"></i> {% if producto.stock <= 0 %}Sin stock{% else %}Agregar al carrito{% endif %}</button>
+                        <a href="{% url 'ver_carrito' %}" class="btn btn-soft btn-lg">Ver carrito</a>
+                    </div>
+                    <div id="cart-feedback" class="mt-3" aria-live="polite"></div>
+                    <div class="detail-benefits">
+                        <div><i class="bi bi-check2-circle"></i><span><strong>Stock validado</strong><small>Confirmamos disponibilidad antes de agregar.</small></span></div>
+                        <div><i class="bi bi-shield-check"></i><span><strong>Compra simple</strong><small>Tu carrito queda guardado en este dispositivo.</small></span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

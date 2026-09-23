@@ -1,65 +1,16 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
 {% block title %}Mis turnos | Patitas Vet{% endblock %}
-
+{% block page_name %}mis-turnos{% endblock %}
 {% block content %}
-
-<section class="container my-5">
-    <h1 class="mb-4">Mis turnos</h1>
-
-    {% if turnos %}
-    <div class="table-responsive">
-        <table class="table table-hover align-middle">
-            <thead>
-                <tr>
-                    <th>Servicio</th>
-                    <th>Mascota</th>
-                    <th>Fecha</th>
-                    <th>Hora</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for turno in turnos %}
-                <tr>
-                    <td>{{ turno.servicio.nombre }}</td>
-                    <td>{{ turno.mascota }}</td>
-                    <td>{{ turno.fecha|date:"d/m/Y" }}</td>
-                    <td>{{ turno.hora|time:"H:i" }}</td>
-                    <td>
-                        {% if turno.estado == "pendiente" %}
-                        <span class="badge bg-warning text-dark">
-                            {{ turno.get_estado_display }}
-                        </span>
-                        {% elif turno.estado == "confirmado" %}
-                        <span class="badge bg-success">
-                            {{ turno.get_estado_display }}
-                        </span>
-                        {% elif turno.estado == "cancelado" %}
-                        <span class="badge bg-danger">
-                            {{ turno.get_estado_display }}
-                        </span>
-                        {% else %}
-                        <span class="badge bg-secondary">
-                            {{ turno.get_estado_display }}
-                        </span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-    <p class="text-muted">
-        Todavía no solicitaste turnos.
-    </p>
-
-    <a href="{% url 'listar_catalogo' %}" class="btn btn-success">
-        Ver servicios
-    </a>
-    {% endif %}
-</section>
-
+<section class="page-hero compact"><div class="container"><div class="page-hero-card reveal"><span class="eyebrow">Tu agenda</span><div class="d-md-flex justify-content-between align-items-end gap-4"><div><h1>Mis turnos</h1><p>Consultá tus próximas visitas y el estado de cada solicitud.</p></div><a href="{% url 'listar_catalogo' %}" class="btn btn-primary-app mt-3 mt-md-0"><i class="bi bi-plus-lg"></i> Nuevo turno</a></div></div></div></section>
+<section class="section-space pt-4"><div class="container"><div class="appointment-grid">
+{% for turno in turnos %}
+<article class="appointment-card reveal">
+    <div class="appointment-date"><span>{{ turno.fecha|date:'d' }}</span><small>{{ turno.fecha|date:'M' }}</small></div>
+    <div class="appointment-main"><div class="d-flex flex-wrap align-items-center gap-2 mb-2"><span class="status-badge status-{{ turno.estado }}">{{ turno.get_estado_display }}</span><span class="appointment-time"><i class="bi bi-clock"></i> {{ turno.hora|time:'H:i' }}</span></div><h2>{{ turno.servicio.nombre }}</h2><p><i class="bi bi-heart"></i> {{ turno.mascota }}</p>{% if turno.observaciones %}<small class="appointment-note">{{ turno.observaciones }}</small>{% endif %}</div>
+</article>
+{% empty %}
+<div class="empty-state reveal"><i class="bi bi-calendar2-heart"></i><h3>Todavía no tenés turnos</h3><p>Elegí un servicio y reservá el horario que mejor te quede.</p><a href="{% url 'listar_catalogo' %}" class="btn btn-primary-app">Ver servicios</a></div>
+{% endfor %}
+</div></div></section>
 {% endblock %}

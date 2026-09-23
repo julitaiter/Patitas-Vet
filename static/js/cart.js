@@ -1,281 +1,219 @@
 (function ($) {
-    "use strict";
+    'use strict';
 
-    const STORAGE_KEY = "patitasVetCart";
-    const EXPIRATION_KEY = "patitasVetCartExpiresAt";
-    const CART_LIFETIME_MS = 60 * 60 * 1000;
-    let cartExpired = false;
-    let expirationTimer = null;
-
-    function clearStoredCart() {
-        if (expirationTimer) {
-            window.clearTimeout(expirationTimer);
-            expirationTimer = null;
-        }
-        localStorage.removeItem(STORAGE_KEY);
-        localStorage.removeItem(EXPIRATION_KEY);
-    }
-
-    function scheduleExpiration(expiresAt) {
-        if (expirationTimer) {
-            window.clearTimeout(expirationTimer);
-        }
-        expirationTimer = window.setTimeout(() => {
-            clearStoredCart();
-            cartExpired = true;
-            updateCartCount();
-            renderCartPage();
-        }, Math.max(0, expiresAt - Date.now()));
-    }
+    const STORAGE_KEY = 'patitasVetCart';
 
     function getCart() {
         try {
-            const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
-            if (!Array.isArray(value)) {
-                clearStoredCart();
-                return [];
-            }
-
-            if (!value.length) {
-                clearStoredCart();
-                return [];
-            }
-
-            let expiresAt = Number(localStorage.getItem(EXPIRATION_KEY));
-            if (!expiresAt) {
-                expiresAt = Date.now() + CART_LIFETIME_MS;
-                localStorage.setItem(EXPIRATION_KEY, String(expiresAt));
-            }
-
-            if (Date.now() >= expiresAt) {
-                clearStoredCart();
-                cartExpired = true;
-                return [];
-            }
-
-            scheduleExpiration(expiresAt);
-            return value.filter((item) => item && Number(item.id));
-        } catch (error) {
-            clearStoredCart();
+            const value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return Array.isArray(value) ? value : [];
+        } catch (_) {
             return [];
         }
     }
 
     function saveCart(cart) {
-        if (cart.length) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
-            localStorage.setItem(
-                EXPIRATION_KEY,
-                String(Date.now() + CART_LIFETIME_MS)
-            );
-            scheduleExpiration(Number(localStorage.getItem(EXPIRATION_KEY)));
-            cartExpired = false;
-        } else {
-            clearStoredCart();
-        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(cart));
         updateCartCount();
+        window.dispatchEvent(new CustomEvent('patitas:cart-updated', { detail: { cart } }));
     }
 
-    function getCartTotalItems() {
-        return getCart().reduce((total, item) => total + (Number(item.cantidad) || 0), 0);
+    function totalItems(cart = getCart()) {
+        return cart.reduce((sum, item) => sum + Number(item.cantidad || 0), 0);
     }
 
     function updateCartCount() {
-        const total = getCartTotalItems();
-        $("#cart-count")
-            .text(total)
-            .toggleClass("d-none", total === 0);
+        const badge = document.getElementById('cart-count');
+        if (!badge) return;
+        const count = totalItems();
+        badge.textContent = count;
+        badge.hidden = count <= 0;
     }
 
-    function stockUrl(productId) {
-        const template = document.body.dataset.stockUrlTemplate || "/ajax/producto/0/validar-stock/";
-        return template.replace(/\/0\//, `/${productId}/`);
+    function formatMoney(value) {
+        return new Intl.NumberFormat('es-AR', {
+            style: 'currency',
+            currency: 'ARS',
+            maximumFractionDigits: 2
+        }).format(Number(value || 0));
     }
 
-    function validateStock(productId, cantidad) {
+    function normalizeProduct(data, stockUrl) {
+        const product = data.producto || data.product || data;
+        return {
+            id: Number(product.id),
+            nombre: product.nombre || product.name || 'Producto',
+            precio: Number(product.precio || product.price || 0),
+            imagen_url: product.imagen_url || product.image_url || '',
+            stock: Number(product.stock || 0),
+            cantidad: 1,
+            detalle_url: product.detalle_url || product.detail_url || '#',
+            stock_url: stockUrl
+        };
+    }
+
+    function validateStock(stockUrl, quantity) {
+        if (!stockUrl) return $.Deferred().reject({ message: 'No se encontró el endpoint de stock.' }).promise();
         return $.ajax({
-            url: stockUrl(productId),
-            method: "GET",
-            dataType: "json",
-            data: { cantidad: cantidad }
-        }).catch((xhr) => {
-            const response = xhr.responseJSON || {};
-            return $.Deferred().reject({
-                mensaje: response.mensaje || "No pudimos validar el stock. Intentá nuevamente."
-            }).promise();
+            url: stockUrl,
+            method: 'GET',
+            dataType: 'json',
+            data: { cantidad: quantity }
         });
     }
 
-    function showFeedback(message, type) {
-        let $feedback = $("#cart-feedback").first();
-        if (!$feedback.length) {
-            $feedback = $("<div>", {
-                id: "global-cart-feedback",
-                class: "cart-floating-feedback",
-                "aria-live": "polite"
-            }).appendTo(document.body);
-        }
-        $feedback.html(
-            $("<div>", {
-                class: `alert alert-${type || "success"} alert-dismissible fade show`,
-                role: "alert",
-                text: message
-            }).append($("<button>", {
-                type: "button",
-                class: "btn-close",
-                "data-bs-dismiss": "alert",
-                "aria-label": "Cerrar"
-            }))
-        );
-    }
-
-    function addProductToCart(productId) {
+    function addProduct(button) {
+        const $button = $(button);
+        const productId = Number($button.data('product-id'));
+        const stockUrl = String($button.data('stock-url') || '');
         const cart = getCart();
-        const existing = cart.find((item) => Number(item.id) === Number(productId));
-        const requestedQuantity = existing ? Number(existing.cantidad) + 1 : 1;
+        const current = cart.find((item) => Number(item.id) === productId);
+        const requestedQuantity = Number(current?.cantidad || 0) + 1;
 
-        return validateStock(productId, requestedQuantity).then((data) => {
-            if (!data.ok) {
-                showFeedback(data.mensaje, "warning");
-                return false;
-            }
-            if (existing) {
-                existing.cantidad = requestedQuantity;
-                existing.stock = data.producto.stock;
-            } else {
-                cart.push({
-                    id: data.producto.id,
-                    nombre: data.producto.nombre,
-                    precio: Number(data.producto.precio),
-                    imagen_url: data.producto.imagen_url,
-                    stock: data.producto.stock,
-                    cantidad: 1,
-                    detalle_url: data.producto.detalle_url
-                });
-            }
-            saveCart(cart);
-            showFeedback(`${data.producto.nombre} se agregó al carrito.`, "success");
-            renderCartPage();
-            return true;
-        }).catch((error) => {
-            showFeedback(error.mensaje || "No pudimos agregar el producto.", "danger");
-            return false;
-        });
+        $button.prop('disabled', true).addClass('is-loading');
+        validateStock(stockUrl, requestedQuantity)
+            .done((data) => {
+                if (data.ok === false) {
+                    notify(data.mensaje || 'No hay stock suficiente.', 'warning');
+                    return;
+                }
+                const incoming = normalizeProduct(data, stockUrl);
+                if (current) {
+                    current.cantidad = requestedQuantity;
+                    current.stock = incoming.stock || current.stock;
+                    current.precio = incoming.precio || current.precio;
+                    current.stock_url = stockUrl || current.stock_url;
+                } else {
+                    incoming.cantidad = 1;
+                    cart.push(incoming);
+                }
+                saveCart(cart);
+                notify(data.mensaje || `${incoming.nombre} se agregó al carrito.`, 'success');
+                renderCartPage();
+            })
+            .fail((xhr) => {
+                const message = xhr.responseJSON?.mensaje || xhr.responseJSON?.detail || 'No pudimos validar el stock.';
+                notify(message, 'danger');
+            })
+            .always(() => {
+                $button.prop('disabled', false).removeClass('is-loading');
+            });
     }
 
-    function removeProductFromCart(productId) {
-        const cart = getCart().filter((item) => Number(item.id) !== Number(productId));
-        saveCart(cart);
-        showFeedback("Producto quitado del carrito.", "success");
+    function removeProduct(productId) {
+        saveCart(getCart().filter((item) => Number(item.id) !== Number(productId)));
         renderCartPage();
+        notify('Producto eliminado del carrito.', 'info');
     }
 
     function clearCart() {
         saveCart([]);
-        showFeedback("Vaciaste el carrito.", "success");
         renderCartPage();
+        notify('Carrito vaciado.', 'info');
     }
 
-    function changeProductQuantity(productId, newQuantity) {
-        if (newQuantity < 1) {
-            removeProductFromCart(productId);
-            return $.Deferred().resolve().promise();
+    function changeQuantity(productId, quantity) {
+        quantity = Number(quantity);
+        if (quantity <= 0) {
+            removeProduct(productId);
+            return;
         }
-        return validateStock(productId, newQuantity).then((data) => {
-            if (!data.ok) {
-                showFeedback(data.mensaje, "warning");
-                renderCartPage();
+        const cart = getCart();
+        const item = cart.find((entry) => Number(entry.id) === Number(productId));
+        if (!item) return;
+
+        if (!item.stock_url) {
+            if (quantity > Number(item.stock || 0)) {
+                notify('No hay stock suficiente.', 'warning');
                 return;
             }
-            const cart = getCart();
-            const item = cart.find((entry) => Number(entry.id) === Number(productId));
-            if (item) {
-                item.cantidad = newQuantity;
-                item.stock = data.producto.stock;
-                item.precio = Number(data.producto.precio);
-                saveCart(cart);
-                renderCartPage();
-            }
-        }).catch((error) => {
-            showFeedback(error.mensaje || "No pudimos actualizar la cantidad.", "danger");
+            item.cantidad = quantity;
+            saveCart(cart);
             renderCartPage();
-        });
-    }
-
-    function formatMoney(value) {
-        return new Intl.NumberFormat("es-AR", {
-            style: "currency",
-            currency: "ARS",
-            minimumFractionDigits: 2
-        }).format(Number(value) || 0);
-    }
-
-    function escapeHtml(value) {
-        return $("<div>").text(value == null ? "" : String(value)).html();
-    }
-
-    function renderCartPage() {
-        const $page = $("#cart-page");
-        if (!$page.length) return;
-        const cart = getCart();
-        if (!cart.length) {
-            const message = cartExpired
-                ? "El carrito venció después de una hora sin actividad."
-                : "Agregá productos desde el catálogo.";
-            $page.html(`<div class="text-center border rounded p-5 bg-light"><i class="bi bi-cart3 display-5 text-secondary"></i><h2 class="h4 mt-3">Tu carrito está vacío</h2><p class="text-muted mb-0">${message}</p></div>`);
-            cartExpired = false;
             return;
         }
 
-        let total = 0;
-        const rows = cart.map((item) => {
-            const subtotal = Number(item.precio) * Number(item.cantidad);
-            total += subtotal;
-            const image = item.imagen_url
-                ? `<img src="${escapeHtml(item.imagen_url)}" alt="" class="cart-product-image rounded">`
-                : '<span class="cart-product-image rounded bg-light d-inline-flex align-items-center justify-content-center"><i class="bi bi-image"></i></span>';
-            return `<tr>
-                <td>${image}</td>
-                <td><a href="${escapeHtml(item.detalle_url)}" class="fw-semibold text-decoration-none">${escapeHtml(item.nombre)}</a></td>
-                <td>${formatMoney(item.precio)}</td>
-                <td><input type="number" class="form-control form-control-sm cart-quantity" min="1" max="${Number(item.stock) || 1}" value="${Number(item.cantidad)}" data-product-id="${Number(item.id)}" aria-label="Cantidad de ${escapeHtml(item.nombre)}"></td>
-                <td class="fw-semibold">${formatMoney(subtotal)}</td>
-                <td><button type="button" class="btn btn-outline-danger btn-sm js-remove-cart-item" data-product-id="${Number(item.id)}" aria-label="Quitar ${escapeHtml(item.nombre)}"><i class="bi bi-trash"></i></button></td>
-            </tr>`;
-        }).join("");
-
-        $page.html(`<div class="table-responsive"><table class="table align-middle cart-table">
-            <thead><tr><th scope="col">Imagen</th><th scope="col">Producto</th><th scope="col">Precio</th><th scope="col">Cantidad</th><th scope="col">Subtotal</th><th scope="col"></th></tr></thead>
-            <tbody>${rows}</tbody></table></div>
-            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
-                <button type="button" class="btn btn-outline-danger" id="clear-cart"><i class="bi bi-trash"></i> Vaciar carrito</button>
-                <p class="fs-4 fw-bold mb-0">Total: <span class="text-success">${formatMoney(total)}</span></p>
-            </div>`);
+        validateStock(item.stock_url, quantity)
+            .done((data) => {
+                if (data.ok === false) {
+                    notify(data.mensaje || 'No hay stock suficiente.', 'warning');
+                    return;
+                }
+                item.cantidad = quantity;
+                if (data.producto?.stock !== undefined) item.stock = Number(data.producto.stock);
+                saveCart(cart);
+                renderCartPage();
+            })
+            .fail((xhr) => notify(xhr.responseJSON?.mensaje || 'No pudimos validar el stock.', 'danger'));
     }
 
-    $(document).on("click", ".js-add-to-cart", function (event) {
-        event.preventDefault();
-        const $button = $(this);
-        $button.prop("disabled", true);
-        addProductToCart($button.data("product-id")).always(() => $button.prop("disabled", false));
-    });
-    $(document).on("click", ".js-remove-cart-item", function () {
-        removeProductFromCart($(this).data("product-id"));
-    });
-    $(document).on("click", "#clear-cart", clearCart);
-    $(document).on("change", ".cart-quantity", function () {
-        changeProductQuantity($(this).data("product-id"), Number($(this).val()));
-    });
+    function renderCartPage() {
+        const root = document.getElementById('cart-page');
+        if (!root) return;
+        const cart = getCart();
+        const esc = window.PatitasEscapeHtml || ((value) => String(value));
+
+        if (!cart.length) {
+            root.innerHTML = `
+                <div class="empty-state">
+                    <i class="bi bi-bag-heart"></i>
+                    <h3>Tu carrito está vacío</h3>
+                    <p>Explorá el catálogo y agregá productos para verlos acá.</p>
+                    <a class="btn btn-primary-app" href="/catalogo/">Explorar catálogo</a>
+                </div>`;
+            return;
+        }
+
+        const subtotal = cart.reduce((sum, item) => sum + Number(item.precio || 0) * Number(item.cantidad || 0), 0);
+        const itemsHtml = cart.map((item) => `
+            <div class="cart-item" data-product-id="${Number(item.id)}">
+                <div class="cart-item-media">
+                    ${item.imagen_url ? `<img src="${esc(item.imagen_url)}" alt="${esc(item.nombre)}">` : '<div class="catalog-card-placeholder h-100"><i class="bi bi-bag-heart"></i></div>'}
+                </div>
+                <div class="cart-item-copy">
+                    <a href="${esc(item.detalle_url || '#')}">${esc(item.nombre)}</a>
+                    <small>${formatMoney(item.precio)} por unidad</small>
+                    <button class="btn btn-link btn-sm text-danger p-0 mt-2 js-cart-remove" data-product-id="${Number(item.id)}">Quitar</button>
+                </div>
+                <div class="cart-quantity" aria-label="Cantidad">
+                    <button type="button" class="js-cart-qty" data-product-id="${Number(item.id)}" data-quantity="${Number(item.cantidad) - 1}" aria-label="Restar"><i class="bi bi-dash"></i></button>
+                    <span>${Number(item.cantidad)}</span>
+                    <button type="button" class="js-cart-qty" data-product-id="${Number(item.id)}" data-quantity="${Number(item.cantidad) + 1}" aria-label="Sumar"><i class="bi bi-plus"></i></button>
+                </div>
+                <div class="cart-item-subtotal">${formatMoney(Number(item.precio) * Number(item.cantidad))}</div>
+            </div>`).join('');
+
+        root.innerHTML = `
+            <div class="cart-layout">
+                <div class="cart-list">${itemsHtml}</div>
+                <aside class="cart-summary">
+                    <h2>Resumen</h2>
+                    <div class="cart-summary-row"><span>Productos</span><strong>${totalItems(cart)}</strong></div>
+                    <div class="cart-summary-total"><span>Total</span><span>${formatMoney(subtotal)}</span></div>
+                    <p class="small text-muted">El stock se valida al modificar cantidades. El checkout puede incorporarse como siguiente etapa.</p>
+                    <button type="button" class="btn btn-outline-danger w-100 js-cart-clear"><i class="bi bi-trash3"></i> Vaciar carrito</button>
+                </aside>
+            </div>`;
+    }
+
+    function notify(message, type) {
+        if (window.PatitasUI?.toast) window.PatitasUI.toast(message, type);
+        const feedback = document.getElementById('cart-feedback');
+        if (feedback) {
+            feedback.innerHTML = `<div class="alert alert-${type === 'danger' ? 'danger' : type === 'warning' ? 'warning' : 'success'} mb-0">${window.PatitasEscapeHtml ? window.PatitasEscapeHtml(message) : message}</div>`;
+        }
+    }
+
+    $(document)
+        .on('click', '.js-add-to-cart', function (event) { event.preventDefault(); addProduct(this); })
+        .on('click', '.js-cart-remove', function () { removeProduct($(this).data('product-id')); })
+        .on('click', '.js-cart-clear', clearCart)
+        .on('click', '.js-cart-qty', function () { changeQuantity($(this).data('product-id'), $(this).data('quantity')); });
 
     $(function () {
         updateCartCount();
         renderCartPage();
     });
 
-    window.PatitasVetCart = {
-        getCart, saveCart, getCartTotalItems, updateCartCount, validateStock,
-        addProductToCart, removeProductFromCart, clearCart,
-        changeProductQuantity, renderCartPage, formatMoney,
-        CART_LIFETIME_MS
-    };
+    window.PatitasCart = { getCart, saveCart, updateCartCount, addProduct, removeProduct, clearCart, changeQuantity, renderCartPage, formatMoney };
 })(jQuery);

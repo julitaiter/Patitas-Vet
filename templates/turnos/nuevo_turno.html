@@ -1,113 +1,62 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
 {% block title %}Solicitar turno | Patitas Vet{% endblock %}
-
+{% block page_name %}nuevo-turno{% endblock %}
 {% block content %}
-
-<section class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-4 p-md-5">
-                    <h1 class="h3 mb-3">Solicitar turno</h1>
-
-                    <p class="text-muted">
-                        Servicio: <strong>{{ servicio.nombre }}</strong>
-                    </p>
-
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-
-                        {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {{ form.non_field_errors }}
-                        </div>
-                        {% endif %}
-
-                        {% for field in form %}
-                        <div class="mb-3">
-                            <label class="form-label" for="{{ field.id_for_label }}">
-                                {{ field.label }}
-                            </label>
-
-                            {{ field }}
-
-                            {% for error in field.errors %}
-                            <div class="text-danger small mt-1">
-                                {{ error }}
-                            </div>
-                            {% endfor %}
-                        </div>
-                        {% endfor %}
-
-                        <div class="d-flex flex-wrap gap-2">
-                            <button type="submit" class="btn btn-success">
-                                Solicitar turno
-                            </button>
-
-                            <a href="{% url 'listar_catalogo' %}" class="btn btn-outline-secondary">
-                                Cancelar
-                            </a>
-                        </div>
-                    </form>
+<section class="section-space">
+    <div class="container">
+        <div class="form-page-shell reveal">
+            <div class="form-page-heading">
+                <a class="back-link" href="{% url 'detalle_servicio' pk=servicio.pk %}"><i class="bi bi-arrow-left"></i> Volver al servicio</a>
+                <span class="eyebrow">Reserva online</span>
+                <h1>Solicitar turno</h1>
+                <p>Elegí una fecha y un horario disponible para <strong>{{ servicio.nombre }}</strong>.</p>
+            </div>
+            <div class="app-form-card">
+                <div class="service-summary-bar">
+                    <div class="service-summary-icon"><i class="bi bi-heart-pulse"></i></div>
+                    <div><small>Servicio seleccionado</small><strong>{{ servicio.nombre }}</strong></div>
+                    <span>{{ servicio.duracion_minutos }} min</span>
                 </div>
+                <form method="post" novalidate>{% csrf_token %}
+                    {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+                    {% for field in form %}
+                        <div class="form-field-block"><label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}{% for error in field.errors %}<div class="invalid-feedback d-block">{{ error }}</div>{% endfor %}</div>
+                    {% endfor %}
+                    <div class="form-actions"><button type="submit" class="btn btn-primary-app btn-lg"><i class="bi bi-calendar-check"></i> Confirmar solicitud</button><a href="{% url 'listar_catalogo' %}" class="btn btn-soft btn-lg">Cancelar</a></div>
+                </form>
             </div>
         </div>
     </div>
 </section>
-
 {% endblock %}
-
 {% block extra_js %}
 <script>
-    const fechaInput = document.getElementById("id_fecha");
-    const horaSelect = document.getElementById("id_hora");
-    const servicioId = "{{ servicio.id }}";
-
-    function limpiarHorarios(mensaje) {
-        horaSelect.innerHTML = "";
-
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = mensaje;
-
+(function () {
+    const fechaInput = document.getElementById('id_fecha');
+    const horaSelect = document.getElementById('id_hora');
+    if (!fechaInput || !horaSelect) return;
+    const servicioId = '{{ servicio.id }}';
+    const endpoint = "{% url 'horarios_disponibles' %}";
+    const setMessage = (message) => {
+        horaSelect.innerHTML = '';
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = message;
         horaSelect.appendChild(option);
-    }
-
-    async function cargarHorarios() {
-        const fecha = fechaInput.value;
-
-        if (!fecha) {
-            limpiarHorarios("Seleccioná una fecha");
-            return;
-        }
-
-        limpiarHorarios("Cargando horarios...");
-
-        const url = "{% url 'horarios_disponibles' %}" + `?servicio=${servicioId}&fecha=${fecha}`;
-        const response = await fetch(url);
-        const data = await response.json();
-
-        horaSelect.innerHTML = "";
-
-        if (!data.horarios.length) {
-            limpiarHorarios("No hay horarios disponibles");
-            return;
-        }
-
-        const defaultOption = document.createElement("option");
-        defaultOption.value = "";
-        defaultOption.textContent = "Seleccioná un horario";
-        horaSelect.appendChild(defaultOption);
-
-        data.horarios.forEach((horario) => {
-            const option = document.createElement("option");
-            option.value = horario.value;
-            option.textContent = horario.label;
-            horaSelect.appendChild(option);
-        });
-    }
-
-    fechaInput.addEventListener("change", cargarHorarios);
+    };
+    const cargar = async () => {
+        if (!fechaInput.value) { setMessage('Seleccioná una fecha'); return; }
+        setMessage('Buscando horarios...');
+        try {
+            const response = await fetch(`${endpoint}?servicio=${servicioId}&fecha=${fechaInput.value}`);
+            const data = await response.json();
+            horaSelect.innerHTML = '';
+            if (!data.horarios || !data.horarios.length) { setMessage('No hay horarios disponibles'); return; }
+            const first = document.createElement('option'); first.value = ''; first.textContent = 'Seleccioná un horario'; horaSelect.appendChild(first);
+            data.horarios.forEach((horario) => { const option = document.createElement('option'); option.value = horario.value; option.textContent = horario.label; horaSelect.appendChild(option); });
+        } catch (error) { setMessage('No se pudieron cargar los horarios'); }
+    };
+    fechaInput.addEventListener('change', cargar);
+})();
 </script>
 {% endblock %}

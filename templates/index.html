@@ -1,148 +1,93 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Inicio | Patitas Vet{% endblock %}
+{% block title %}Patitas Vet | Cuidado simple para tu mascota{% endblock %}
+{% block page_name %}home{% endblock %}
 
 {% block content %}
-
-<section id="carouselPatitas" class="carousel slide home-hero-carousel" data-bs-ride="carousel">
-    <div class="carousel-indicators">
-        <button type="button" data-bs-target="#carouselPatitas" data-bs-slide-to="0" class="active" aria-current="true"
-            aria-label="Slide 1"></button>
-
-        <button type="button" data-bs-target="#carouselPatitas" data-bs-slide-to="1" aria-label="Slide 2"></button>
-
-        <button type="button" data-bs-target="#carouselPatitas" data-bs-slide-to="2" aria-label="Slide 3"></button>
-    </div>
-
-    <div class="carousel-inner">
-        <div class="carousel-item active">
-            <img src="{% static 'img/carousel/1.jpg' %}" class="d-block w-100 carousel-img" alt="Atención veterinaria">
-
-            <div class="carousel-caption d-none d-md-block">
-                <h1>Cuidamos a tu mascota</h1>
-                <p>Atención veterinaria profesional y cercana.</p>
-
-                <a href="{% url 'listar_catalogo' %}" class="btn btn-success">
-                    Ver catálogo
-                </a>
-            </div>
-        </div>
-
-        <div class="carousel-item">
-            <img src="{% static 'img/carousel/2.jpg' %}" class="d-block w-100 carousel-img" alt="Peluquería canina">
-
-            <div class="carousel-caption d-none d-md-block">
-                <h1>Peluquería canina</h1>
-                <p>Baños, cortes y cuidado estético para tu mascota.</p>
-
-                <a href="{% url 'listar_catalogo' %}" class="btn btn-success">
-                    Conocer servicios
-                </a>
-            </div>
-        </div>
-
-        <div class="carousel-item">
-            <img src="{% static 'img/carousel/3.jpg' %}" class="d-block w-100 carousel-img"
-                alt="Productos para mascotas">
-
-            <div class="carousel-caption d-none d-md-block">
-                <h1>Productos para mascotas</h1>
-                <p>Alimentos, accesorios y juguetes.</p>
-
-                <a href="{% url 'listar_catalogo' %}" class="btn btn-success">
-                    Ver productos
-                </a>
-            </div>
-        </div>
-    </div>
-
-    <button class="carousel-control-prev" type="button" data-bs-target="#carouselPatitas" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Anterior</span>
-    </button>
-
-    <button class="carousel-control-next" type="button" data-bs-target="#carouselPatitas" data-bs-slide="next">
-        <span class="carousel-control-next-icon" aria-hidden="true"></span>
-        <span class="visually-hidden">Siguiente</span>
-    </button>
-</section>
-
-<section class="container my-5 js-scroll-section">
-    <div class="text-center mb-4 js-scroll-heading">
-        <h2>Servicios destacados</h2>
-        <p class="text-muted">
-            Todo lo que tu mascota necesita en un solo lugar.
-        </p>
-    </div>
-
-    <div class="row g-4 js-scroll-items">
-        {% for servicio in servicios_destacados %}
-        {% include 'catalogo/includes/card_item.html' with item=servicio tipo='servicio' %}
-        {% empty %}
-        <p class="text-center text-muted">
-            Todavía no hay servicios cargados.
-        </p>
-        {% endfor %}
-    </div>
-
-    <div class="text-center mt-4">
-        <a href="{% url 'listar_catalogo' %}" class="btn btn-outline-success">
-            Ver catálogo completo
-        </a>
-    </div>
-</section>
-
-<section class="container my-5 js-scroll-section">
-    <div class="row g-4 text-center js-scroll-items">
-        <div class="col-md-4">
-            <div class="p-4 bg-white rounded shadow-sm h-100">
-                <h3 class="h5">Atención profesional</h3>
-                <p class="text-muted mb-0">
-                    Cuidamos la salud de tu mascota con compromiso y dedicación.
-                </p>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="p-4 bg-white rounded shadow-sm h-100">
-                <h3 class="h5">Servicios integrales</h3>
-                <p class="text-muted mb-0">
-                    Veterinaria, estética, controles y productos en un solo lugar.
-                </p>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="p-4 bg-white rounded shadow-sm h-100">
-                <h3 class="h5">Cercanía y confianza</h3>
-                <p class="text-muted mb-0">
-                    Acompañamos a cada familia en el cuidado diario de sus mascotas.
-                </p>
+<section class="hero-section section-space">
+    <div class="container">
+        <div class="hero-panel reveal">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-7">
+                    <span class="eyebrow"><i class="bi bi-stars"></i> Veterinaria, turnos y tienda en un solo lugar</span>
+                    <h1 class="hero-title">Cuidar a quienes te acompañan debería sentirse <span>simple.</span></h1>
+                    <p class="hero-copy">Reservá turnos, explorá servicios y encontrá productos para tu mascota desde una experiencia clara, rápida y cercana.</p>
+                    <div class="d-flex flex-wrap gap-3 hero-actions">
+                        <a href="{% url 'listar_catalogo' %}" class="btn btn-primary-app btn-lg">Explorar catálogo <i class="bi bi-arrow-right"></i></a>
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'mis_turnos' %}" class="btn btn-soft btn-lg">Ver mis turnos</a>
+                        {% else %}
+                            <a href="{% url 'account_signup' %}" class="btn btn-soft btn-lg">Crear mi cuenta</a>
+                        {% endif %}
+                    </div>
+                    <div class="hero-trust-row">
+                        <div><i class="bi bi-calendar2-check"></i><span><strong>Turnos online</strong><small>Disponibilidad en tiempo real</small></span></div>
+                        <div><i class="bi bi-shield-check"></i><span><strong>Atención organizada</strong><small>Todo en un mismo lugar</small></span></div>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="hero-visual" aria-hidden="true">
+                        <div class="hero-orb hero-orb-one"></div>
+                        <div class="hero-orb hero-orb-two"></div>
+                        <div class="hero-pet-card hero-pet-main">
+                            <span class="pet-icon"><i class="bi bi-heart-pulse"></i></span>
+                            <strong>Tu mascota primero</strong>
+                            <small>Una experiencia pensada para acompañar su cuidado.</small>
+                        </div>
+                        <div class="hero-pet-card hero-pet-float-one"><i class="bi bi-calendar-heart"></i><span>Turnos simples</span></div>
+                        <div class="hero-pet-card hero-pet-float-two"><i class="bi bi-bag-heart"></i><span>Productos</span></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
-{% if not user.is_authenticated %}
-<section class="bg-light py-5 js-scroll-section">
-    <div class="container text-center js-scroll-heading">
-        <h2>Registrate para acceder a beneficios</h2>
-        <p class="mb-4">
-            Creá tu cuenta para consultar servicios, ver novedades y recibir atención personalizada.
-        </p>
+<section class="section-space pt-0">
+    <div class="container">
+        <div class="section-heading reveal">
+            <div>
+                <span class="eyebrow">Servicios destacados</span>
+                <h2>Todo lo importante, más cerca</h2>
+                <p>Encontrá rápidamente los servicios más elegidos.</p>
+            </div>
+            <a href="{% url 'listar_catalogo' %}" class="text-link">Ver catálogo completo <i class="bi bi-arrow-right"></i></a>
+        </div>
 
-        <a href="{% url 'account_signup' %}" class="btn btn-success">
-            Crear cuenta
-        </a>
+        <div class="row g-4">
+            {% for servicio in servicios_destacados %}
+                <div class="col-md-6 col-xl-4 reveal">
+                    <article class="feature-card h-100">
+                        <div class="feature-card-icon"><i class="bi bi-heart-pulse"></i></div>
+                        <span class="feature-card-kicker">{{ servicio.categoria.nombre }}</span>
+                        <h3>{{ servicio.nombre }}</h3>
+                        <p>{{ servicio.descripcion|truncatechars:120 }}</p>
+                        <div class="feature-card-footer">
+                            <strong>${{ servicio.precio }}</strong>
+                            <a href="{% url 'detalle_servicio' pk=servicio.pk %}" aria-label="Ver {{ servicio.nombre }}"><i class="bi bi-arrow-up-right"></i></a>
+                        </div>
+                    </article>
+                </div>
+            {% empty %}
+                <div class="col-12">
+                    <div class="empty-state reveal"><i class="bi bi-heart"></i><h3>Estamos preparando nuestros servicios</h3><p>Muy pronto vas a poder encontrarlos acá.</p></div>
+                </div>
+            {% endfor %}
+        </div>
     </div>
 </section>
-{% endif %}
 
-{% endblock %}
-
-{% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
-<script src="{% static 'js/home-animation.js' %}"></script>
+<section class="section-space pt-0">
+    <div class="container">
+        <div class="cta-panel reveal">
+            <div>
+                <span class="eyebrow eyebrow-light">Tu próxima visita</span>
+                <h2>Reservá cuando tengas tiempo. Nosotros organizamos el resto.</h2>
+                <p>Elegí un servicio, seleccioná fecha y horario, y confirmá tu turno en pocos pasos.</p>
+            </div>
+            <a href="{% url 'listar_catalogo' %}" class="btn btn-light btn-lg">Buscar un servicio</a>
+        </div>
+    </div>
+</section>
 {% endblock %}

@@ -1,22 +1,7 @@
-{% extends "base.html" %}
-
+{% extends 'base.html' %}
 {% block title %}Carrito | Patitas Vet{% endblock %}
-
+{% block page_name %}carrito{% endblock %}
 {% block content %}
-<section class="container my-5">
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-        <div>
-            <h1 class="mb-1">Carrito</h1>
-            <p class="text-muted mb-0">Revisá los productos que elegiste. El carrito vence una hora después de su última modificación.</p>
-        </div>
-        <a href="{% url 'listar_catalogo' %}" class="btn btn-outline-success">Seguir comprando</a>
-    </div>
-
-    <div id="cart-feedback" aria-live="polite"></div>
-    <div id="cart-page">
-        <noscript>
-            <div class="alert alert-warning">Necesitás activar JavaScript para ver y editar el carrito.</div>
-        </noscript>
-    </div>
-</section>
+<section class="page-hero compact"><div class="container"><div class="page-hero-card reveal"><span class="eyebrow">Tu selección</span><h1>Carrito</h1><p>Revisá cantidades y productos antes de continuar.</p></div></div></section>
+<section class="section-space pt-4"><div class="container"><div id="cart-page" class="cart-page reveal"><div class="cart-loading"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando carrito...</div></div><noscript><div class="alert alert-warning mt-4">Necesitás JavaScript habilitado para utilizar el carrito.</div></noscript></div></section>
 {% endblock %}
