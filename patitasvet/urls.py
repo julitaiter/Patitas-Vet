@@ -9,7 +9,7 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('captcha/', include('captcha.urls')),
     path('contacto/', include('contacto.urls')),
-    path('api/v1/', include('api.urls')),
+    path("api/v1/", include("api.urls", namespace="api")),
 ]
 
 if settings.DEBUG:

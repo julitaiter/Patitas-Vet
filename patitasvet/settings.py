@@ -63,6 +63,9 @@ INSTALLED_APPS = [
     # Librerias de terceros
     "captcha",
     "rest_framework",
+    "rest_framework.authtoken",
+    "django_filters",
+    "drf_spectacular",
 
     # Apps propias
     "app",
@@ -184,4 +187,35 @@ ACCOUNT_SIGNUP_FIELDS = [
     "password2*",
 ]
 
-ACCOUNT_LOGIN_METHODS = set(env_list("ACCOUNT_LOGIN_METHODS", default=["username", "email"]))
+ACCOUNT_LOGIN_METHODS = set(
+    env_list("ACCOUNT_LOGIN_METHODS", default=["username", "email"]))
+
+# Django REST Framework
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "api.pagination.StandardResultsSetPagination",
+    "PAGE_SIZE": int(os.getenv("API_PAGE_SIZE", "20")),
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+
+# OpenAPI / Swagger / ReDoc
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Patitas Vet API",
+    "DESCRIPTION": "API REST v1 de Patitas Vet.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+}
