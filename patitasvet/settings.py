@@ -51,6 +51,7 @@ ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", default=["127.0.0.1", "localhost"])
 
 
 INSTALLED_APPS = [
+    # "sslserver",
     # Django
     "django.contrib.admin",
     "django.contrib.auth",
@@ -61,10 +62,12 @@ INSTALLED_APPS = [
 
     # Librerias de terceros
     "captcha",
+    "rest_framework",
 
     # Apps propias
     "app",
     "contacto.apps.ContactoConfig",
+    "api.apps.ApiConfig",
 
     # Allauth
     "allauth",
