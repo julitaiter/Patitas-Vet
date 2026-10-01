@@ -109,7 +109,13 @@ class TurnoStaffUpdateSerializer(serializers.ModelSerializer):
         fecha = attrs.get("fecha", instance.fecha)
         hora = attrs.get("hora", instance.hora)
 
-        cambia_agenda = any(campo in attrs for campo in ("servicio", "fecha", "hora"))
+        reactiva = (
+            instance.estado == Turno.ESTADO_CANCELADO
+            and attrs.get("estado", instance.estado) != Turno.ESTADO_CANCELADO
+        )
+        cambia_agenda = reactiva or any(
+            campo in attrs for campo in ("servicio", "fecha", "hora")
+        )
         if cambia_agenda and not turno_esta_disponible(
             servicio,
             fecha,
@@ -124,7 +130,13 @@ class TurnoStaffUpdateSerializer(serializers.ModelSerializer):
         servicio = validated_data.get("servicio", instance.servicio)
         fecha = validated_data.get("fecha", instance.fecha)
         hora = validated_data.get("hora", instance.hora)
-        cambia_agenda = any(campo in validated_data for campo in ("servicio", "fecha", "hora"))
+        reactiva = (
+            instance.estado == Turno.ESTADO_CANCELADO
+            and validated_data.get("estado", instance.estado) != Turno.ESTADO_CANCELADO
+        )
+        cambia_agenda = reactiva or any(
+            campo in validated_data for campo in ("servicio", "fecha", "hora")
+        )
 
         if not cambia_agenda:
             return super().update(instance, validated_data)

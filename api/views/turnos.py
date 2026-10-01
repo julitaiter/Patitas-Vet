@@ -17,6 +17,7 @@ class TurnoViewSet(
     mixins.UpdateModelMixin,
     viewsets.GenericViewSet,
 ):
+    queryset = Turno.objects.all()
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = TurnoFilter
@@ -26,6 +27,8 @@ class TurnoViewSet(
 
     def get_queryset(self):
         qs = Turno.objects.select_related("usuario", "servicio", "sala", "servicio__categoria")
+        if getattr(self, "swagger_fake_view", False):
+            return qs.none()
         if self.request.user.is_staff:
             return qs
         return qs.filter(usuario=self.request.user)
@@ -42,8 +45,38 @@ class TurnoViewSet(
             return [IsStaffUser()]
         return [IsAuthenticated()]
 
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        turno = serializer.save()
+        response_serializer = TurnoReadSerializer(
+            turno,
+            context={"request": request},
+        )
+        headers = self.get_success_headers(response_serializer.data)
+        return Response(
+            response_serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=headers,
+        )
+
     def _estado_response(self, turno):
         return Response(TurnoReadSerializer(turno, context={"request": self.request}).data)
+
+    def _activar_estado(self, turno, estado):
+        if turno.estado == Turno.ESTADO_CANCELADO:
+            serializer = TurnoStaffUpdateSerializer(
+                turno,
+                data={"estado": estado},
+                partial=True,
+                context={"request": self.request},
+            )
+            serializer.is_valid(raise_exception=True)
+            turno = serializer.save()
+        else:
+            turno.estado = estado
+            turno.save(update_fields=["estado", "updated_at"])
+        return self._estado_response(turno)
 
     @action(detail=True, methods=["post"])
     def cancelar(self, request, pk=None):
@@ -61,20 +94,14 @@ class TurnoViewSet(
     @action(detail=True, methods=["post"], permission_classes=[IsStaffUser])
     def confirmar(self, request, pk=None):
         turno = self.get_object()
-        turno.estado = Turno.ESTADO_CONFIRMADO
-        turno.save(update_fields=["estado", "updated_at"])
-        return self._estado_response(turno)
+        return self._activar_estado(turno, Turno.ESTADO_CONFIRMADO)
 
     @action(detail=True, methods=["post"], permission_classes=[IsStaffUser])
     def realizar(self, request, pk=None):
         turno = self.get_object()
-        turno.estado = Turno.ESTADO_REALIZADO
-        turno.save(update_fields=["estado", "updated_at"])
-        return self._estado_response(turno)
+        return self._activar_estado(turno, Turno.ESTADO_REALIZADO)
 
     @action(detail=True, methods=["post"], permission_classes=[IsStaffUser])
     def pendiente(self, request, pk=None):
         turno = self.get_object()
-        turno.estado = Turno.ESTADO_PENDIENTE
-        turno.save(update_fields=["estado", "updated_at"])
-        return self._estado_response(turno)
+        return self._activar_estado(turno, Turno.ESTADO_PENDIENTE)

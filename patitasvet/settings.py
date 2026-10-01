@@ -194,8 +194,8 @@ ACCOUNT_LOGIN_METHODS = set(
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.TokenAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -218,4 +218,8 @@ SPECTACULAR_SETTINGS = {
     "DESCRIPTION": "API REST v1 de Patitas Vet.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
+    "ENUM_NAME_OVERRIDES": {
+        "TurnoEstadoEnum": "app.models.Turno.ESTADOS",
+        "ConsultaEstadoEnum": "contacto.models.Consulta.ESTADO_CHOICES",
+    },
 }

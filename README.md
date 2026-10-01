@@ -84,7 +84,46 @@ http://127.0.0.1:8000/admin/
 
 - Django
 - django-allauth
+- Django REST Framework
+- django-filter
+- drf-spectacular
 - Pillow
+
+## API REST v1
+
+La API está disponible bajo `/api/v1/` y reutiliza exclusivamente los modelos
+de dominio de `app.models` y `contacto.models`. La app `api` no define ni
+mantiene modelos propios.
+
+Documentación interactiva:
+
+- Swagger UI: `http://127.0.0.1:8000/api/v1/docs/`
+- ReDoc: `http://127.0.0.1:8000/api/v1/redoc/`
+- Esquema OpenAPI: `http://127.0.0.1:8000/api/v1/schema/`
+
+Autenticación por token:
+
+```http
+Authorization: Token <token>
+```
+
+Endpoints principales:
+
+- `POST /api/v1/auth/registro/`
+- `POST /api/v1/auth/login/`
+- `POST /api/v1/auth/logout/`
+- `GET/PATCH /api/v1/me/`
+- `/api/v1/categorias/`, `/productos/` y `/servicios/`
+- `GET /api/v1/productos/{id}/stock/?cantidad=1`
+- `GET /api/v1/servicios/{id}/horarios/?fecha=YYYY-MM-DD`
+- `/api/v1/turnos/` y sus acciones `cancelar`, `confirmar`, `realizar` y `pendiente`
+- `/api/v1/salas/` y `/disponibilidades/` para staff
+- `GET /api/v1/buscar/?q=texto`
+- `POST /api/v1/consultas/` público; gestión de consultas y respuestas para staff
+
+El catálogo admite lectura pública. Las escrituras de catálogo, salas,
+disponibilidades y la gestión global de turnos requieren un usuario staff. Un
+cliente autenticado solo puede consultar, crear y cancelar sus propios turnos.
 
 ## Modelos
 

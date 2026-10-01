@@ -22,15 +22,20 @@ class ItemCatalogoMixin(serializers.ModelSerializer):
     imagen_url = serializers.SerializerMethodField()
     detalle_url = serializers.SerializerMethodField()
 
-    def get_imagen_url(self, obj):
+    def get_imagen_url(self, obj) -> str | None:
         if not obj.imagen:
             return None
         request = self.context.get("request")
         url = obj.imagen.url
         return request.build_absolute_uri(url) if request else url
 
-    def get_detalle_url(self, obj):
+    def get_detalle_url(self, obj) -> str | None:
         raise NotImplementedError
+
+    def validate_precio(self, value):
+        if value < 0:
+            raise serializers.ValidationError("El precio no puede ser negativo.")
+        return value
 
 
 class ProductoListSerializer(ItemCatalogoMixin):
@@ -49,7 +54,7 @@ class ProductoListSerializer(ItemCatalogoMixin):
         ]
         read_only_fields = ["id"]
 
-    def get_detalle_url(self, obj):
+    def get_detalle_url(self, obj) -> str | None:
         return build_absolute_detail_url(self.context.get("request"), "detalle_producto", obj.pk)
 
 
@@ -74,7 +79,7 @@ class ProductoDetailSerializer(ItemCatalogoMixin):
         ]
         read_only_fields = ["id", "imagen_url", "detalle_url", "created_at", "updated_at"]
 
-    def get_detalle_url(self, obj):
+    def get_detalle_url(self, obj) -> str | None:
         return build_absolute_detail_url(self.context.get("request"), "detalle_producto", obj.pk)
 
 
@@ -94,7 +99,7 @@ class ServicioListSerializer(ItemCatalogoMixin):
         ]
         read_only_fields = ["id"]
 
-    def get_detalle_url(self, obj):
+    def get_detalle_url(self, obj) -> str | None:
         return build_absolute_detail_url(self.context.get("request"), "detalle_servicio", obj.pk)
 
 
@@ -119,5 +124,5 @@ class ServicioDetailSerializer(ItemCatalogoMixin):
         ]
         read_only_fields = ["id", "imagen_url", "detalle_url", "created_at", "updated_at"]
 
-    def get_detalle_url(self, obj):
+    def get_detalle_url(self, obj) -> str | None:
         return build_absolute_detail_url(self.context.get("request"), "detalle_servicio", obj.pk)

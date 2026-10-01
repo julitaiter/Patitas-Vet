@@ -1,6 +1,7 @@
 from datetime import date
 
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -10,6 +11,7 @@ from app.models import Categoria, Producto, Servicio
 from app.services.turnos import obtener_horarios_disponibles
 from api.filters import ProductoFilter, ServicioFilter
 from api.permissions import IsStaffOrReadOnly
+from api.views.mixins import ProtectedDestroyMixin
 from api.serializers import (
     CategoriaSerializer,
     ProductoDetailSerializer,
@@ -19,7 +21,7 @@ from api.serializers import (
 )
 
 
-class CategoriaViewSet(viewsets.ModelViewSet):
+class CategoriaViewSet(ProtectedDestroyMixin, viewsets.ModelViewSet):
     serializer_class = CategoriaSerializer
     permission_classes = [IsStaffOrReadOnly]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
@@ -34,7 +36,7 @@ class CategoriaViewSet(viewsets.ModelViewSet):
         return qs
 
 
-class ProductoViewSet(viewsets.ModelViewSet):
+class ProductoViewSet(ProtectedDestroyMixin, viewsets.ModelViewSet):
     permission_classes = [IsStaffOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductoFilter
@@ -84,7 +86,7 @@ class ProductoViewSet(viewsets.ModelViewSet):
         )
 
 
-class ServicioViewSet(viewsets.ModelViewSet):
+class ServicioViewSet(ProtectedDestroyMixin, viewsets.ModelViewSet):
     permission_classes = [IsStaffOrReadOnly]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ServicioFilter
@@ -112,6 +114,11 @@ class ServicioViewSet(viewsets.ModelViewSet):
         except ValueError:
             return Response(
                 {"detail": "El parametro fecha debe usar formato YYYY-MM-DD."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if fecha < timezone.localdate():
+            return Response(
+                {"detail": "No se pueden consultar horarios de una fecha pasada."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

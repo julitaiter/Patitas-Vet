@@ -5,9 +5,10 @@ from app.models import DisponibilidadTurno, Sala
 from api.filters import DisponibilidadTurnoFilter
 from api.permissions import IsStaffUser
 from api.serializers import DisponibilidadTurnoSerializer, SalaSerializer
+from api.views.mixins import ProtectedDestroyMixin
 
 
-class SalaViewSet(viewsets.ModelViewSet):
+class SalaViewSet(ProtectedDestroyMixin, viewsets.ModelViewSet):
     serializer_class = SalaSerializer
     permission_classes = [IsStaffUser]
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]

@@ -31,6 +31,8 @@ class TurnosApiTests(ApiBaseTestCase):
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn("id", response.data)
+        self.assertIn("sala", response.data)
         turno = Turno.objects.get(usuario=self.user)
         self.assertIn(turno.sala_id, {self.sala_a.pk, self.sala_b.pk})
 
@@ -87,3 +89,39 @@ class TurnosApiTests(ApiBaseTestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         turno.refresh_from_db()
         self.assertEqual(turno.estado, Turno.ESTADO_CONFIRMADO)
+
+    def test_no_reactiva_cancelado_si_el_horario_fue_reasignado(self):
+        cancelado = Turno.objects.create(
+            usuario=self.user,
+            servicio=self.servicio,
+            sala=self.sala_a,
+            fecha=self.fecha,
+            hora="09:00",
+            mascota="Anterior",
+            estado=Turno.ESTADO_CANCELADO,
+        )
+        Turno.objects.create(
+            usuario=self.staff,
+            servicio=self.servicio,
+            sala=self.sala_a,
+            fecha=self.fecha,
+            hora="09:00",
+            mascota="Sala A",
+        )
+        Turno.objects.create(
+            usuario=self.staff,
+            servicio=self.servicio,
+            sala=self.sala_b,
+            fecha=self.fecha,
+            hora="09:00",
+            mascota="Sala B",
+        )
+        self.client.force_authenticate(self.staff)
+
+        response = self.client.post(
+            reverse("api:turno-confirmar", kwargs={"pk": cancelado.pk})
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        cancelado.refresh_from_db()
+        self.assertEqual(cancelado.estado, Turno.ESTADO_CANCELADO)

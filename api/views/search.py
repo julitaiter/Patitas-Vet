@@ -1,15 +1,25 @@
 from django.db.models import Q
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import generics
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from app.models import Producto, Servicio
-from api.serializers import ProductoListSerializer, ServicioListSerializer
+from api.serializers import (
+    BusquedaCatalogoResponseSerializer,
+    ProductoListSerializer,
+    ServicioListSerializer,
+)
 
 
-class BuscarCatalogoView(APIView):
+class BuscarCatalogoView(generics.GenericAPIView):
     permission_classes = [AllowAny]
+    serializer_class = BusquedaCatalogoResponseSerializer
 
+    @extend_schema(
+        parameters=[OpenApiParameter("q", str, description="Texto de búsqueda (mínimo 2 caracteres).")],
+        responses=BusquedaCatalogoResponseSerializer,
+    )
     def get(self, request):
         query = request.query_params.get("q", "").strip()
         if len(query) < 2:
