@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 280" role="img" aria-labelledby="title desc">
+  <title id="title">Patitas Vet</title>
+  <desc id="desc">Cuidado que acompaña. Una huella sobre un fondo verde azulado y azul oscuro.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0b766e"/>
+      <stop offset="1" stop-color="#173f55"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1">
+      <stop offset="0" stop-color="#a6e7d6"/>
+      <stop offset="1" stop-color="#ffe1ae"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="280" rx="28" fill="url(#background)"/>
+  <circle cx="1065" cy="45" r="182" fill="#ffffff" opacity=".055"/>
+  <circle cx="1110" cy="240" r="115" fill="#f9bf80" opacity=".13"/>
+  <path d="M0 242c207-73 336-67 531-8s417 53 669-23v69H0z" fill="#ffffff" opacity=".06"/>
+  <g transform="translate(106 52)" fill="url(#accent)">
+    <ellipse cx="72" cy="108" rx="57" ry="49" transform="rotate(-12 72 108)"/>
+    <ellipse cx="13" cy="51" rx="17" ry="24" transform="rotate(-28 13 51)"/>
+    <ellipse cx="53" cy="28" rx="17" ry="24" transform="rotate(-8 53 28)"/>
+    <ellipse cx="97" cy="28" rx="17" ry="24" transform="rotate(11 97 28)"/>
+    <ellipse cx="135" cy="54" rx="17" ry="24" transform="rotate(29 135 54)"/>
+    <path d="M49 110c15-19 35-19 48 0" fill="none" stroke="#14635f" stroke-width="8" stroke-linecap="round"/>
+  </g>
+  <text x="309" y="132" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="76" font-weight="700" letter-spacing="-2">Patitas Vet</text>
+  <text x="314" y="185" fill="#d5f6eb" font-family="Arial, Helvetica, sans-serif" font-size="27" letter-spacing="1">Cuidado que acompaña</text>
+  <rect x="314" y="207" width="210" height="5" rx="2.5" fill="#ffcb8d"/>
+</svg>
