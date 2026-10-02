@@ -17,12 +17,22 @@ from .models import (
     Turno,
     Pedido, PedidoItem, ComprobanteTransferencia, CuentaTransferencia,
     ConfiguracionCheckout, HistorialEstadoPedido,
+    PreguntaFrecuente,
 )
 from .services.pedidos import PedidoError, cambiar_estado_pedido
 
 
 class BasicAdminMixin:
     readonly_fields = ["created_at", "updated_at"]
+
+
+@admin.register(PreguntaFrecuente)
+class PreguntaFrecuenteAdmin(BasicAdminMixin, admin.ModelAdmin):
+    list_display = ["pregunta", "activo", "orden", "updated_at"]
+    list_filter = ["activo"]
+    search_fields = ["pregunta", "descripcion", "contenido"]
+    list_editable = ["activo", "orden"]
+    ordering = ["orden", "pregunta"]
 
 
 class CatalogoAdminMixin(BasicAdminMixin):

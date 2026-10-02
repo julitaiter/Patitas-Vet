@@ -20,7 +20,7 @@ from .forms import (
     TurnoEmpleadoForm,
     TurnoForm,
 )
-from .models import Categoria, DisponibilidadTurno, Pedido, Producto, Sala, Servicio, Turno
+from .models import Categoria, DisponibilidadTurno, Pedido, PreguntaFrecuente, Producto, Sala, Servicio, Turno
 from .services.turnos import (
     obtener_horarios_disponibles,
     obtener_sala_disponible_para_turno,
@@ -46,6 +46,12 @@ def index(request):
     return render(request, "index.html", {
         "servicios_destacados": servicios_destacados,
     })
+
+
+@require_GET
+def preguntas_frecuentes(request):
+    preguntas = PreguntaFrecuente.objects.filter(activo=True)
+    return render(request, "preguntas_frecuentes.html", {"preguntas_frecuentes": preguntas})
 
 
 @login_required

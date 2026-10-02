@@ -23,6 +23,7 @@ urlpatterns = [
     path('', include('app.urls')),
     path('accounts/', include('allauth.urls')),
     path('captcha/', include('captcha.urls')),
+    path('ckeditor/', include('ckeditor_uploader.urls')),
     path('contacto/', include('contacto.urls')),
     path("api/v1/", include("api.urls", namespace="api")),
 ]

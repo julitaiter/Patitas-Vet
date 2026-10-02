@@ -148,6 +148,13 @@ Luego `Producto` y `Servicio` heredan de `ItemCatalogo`, evitando duplicar códi
 - El sitemap toma el dominio de `django.contrib.sites` y publica solo inicio, catálogo, contacto y detalles activos de productos y servicios. Las páginas privadas llevan `noindex` y no aparecen en el sitemap.
 - Los sitemaps usan HTTPS. No se agregó canonical automático: una URL canónica correcta depende de la página y de sus parámetros; se puede incorporar por plantilla cuando se definan esas reglas.
 
+## Preguntas frecuentes y CKEditor
+
+- La página pública está en `/preguntas-frecuentes/`. Las preguntas se administran en **Admin → App → Preguntas frecuentes**; la migración inicial carga seis ejemplos editables.
+- `django-ckeditor` y `ckeditor_uploader` están instalados. Los archivos se guardan mediante `MEDIA_ROOT` bajo `uploads/` y se sirven con `MEDIA_URL`; las rutas de carga y exploración requieren un usuario staff. En desarrollo Django sirve `/media/` con `DEBUG=True`; en producción hay que asegurar que el servidor web sirva `MEDIA_ROOT` y ejecutar `collectstatic` para los recursos del editor.
+- `CKEDITOR_UPLOAD_PATH` y `CKEDITOR_CONFIGS` están en `settings.py`. No se configura `CKEDITOR_JQUERY_URL`: esta versión inicializa el editor con JavaScript propio y el sitio ya carga jQuery 3.7.1 para otras funciones.
+- **Advertencia de seguridad:** `django-ckeditor` 6.7.3 incorpora CKEditor 4.22.1, fuera de soporte y con problemas de seguridad conocidos. Se conserva porque fue la librería solicitada. Limitar el acceso staff y evaluar una migración futura a un editor mantenido antes de usar contenido de editores no confiables.
+
 - El entorno virtual no se sube al repositorio. Cada persona debe crearlo localmente con `python -m venv venv`.
 - Las imágenes cargadas se guardan en la carpeta `media/`, que también está excluida del repositorio.
 - Los templates del proyecto están configurados desde la carpeta raíz `templates/`.

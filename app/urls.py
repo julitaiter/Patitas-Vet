@@ -6,6 +6,7 @@ from .views_checkout import checkout, detalle_pedido, mis_pedidos
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path("preguntas-frecuentes/", views.preguntas_frecuentes, name="preguntas_frecuentes"),
 
     path("mi-perfil/", views.mi_perfil, name="mi_perfil"),
     path("mi-perfil/editar/", views.editar_perfil, name="editar_perfil"),

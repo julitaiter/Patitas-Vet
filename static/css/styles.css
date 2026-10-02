@@ -341,6 +341,20 @@ textarea.form-control { min-height: 120px; }
 .cart-summary-total { display: flex; justify-content: space-between; gap: 1rem; padding: 1rem 0; color: var(--pv-ink); font-size: 1.2rem; font-weight: 850; }
 
 /* Empty state */
+.faq-card { height: 100%; overflow: hidden; border: 1px solid var(--pv-line); border-radius: var(--pv-radius); background: #fff; box-shadow: var(--pv-shadow-sm); transition: border-color var(--pv-transition), box-shadow var(--pv-transition), transform var(--pv-transition); }
+.faq-card:hover { border-color: rgba(15,118,110,.3); box-shadow: var(--pv-shadow-md); transform: translateY(-2px); }
+.faq-question { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: 1rem; min-height: 95px; padding: 1.35rem; border: 0; background: transparent; color: var(--pv-ink); font: inherit; font-size: 1rem; font-weight: 800; line-height: 1.4; text-align: left; cursor: pointer; }
+.faq-question:focus-visible { outline: 3px solid var(--pv-primary); outline-offset: -4px; }
+.faq-toggle { flex: 0 0 auto; color: var(--pv-primary); transition: transform var(--pv-transition); }
+.faq-question:not(.collapsed) .faq-toggle { transform: rotate(180deg); }
+.faq-answer { padding: 0 1.35rem 1.35rem; border-top: 1px solid var(--pv-line); color: var(--pv-text); line-height: 1.7; overflow-wrap: anywhere; }
+.faq-answer > :first-child { margin-top: 1rem; }
+.faq-answer > :last-child { margin-bottom: 0; }
+.faq-answer img, .faq-answer iframe { max-width: 100%; height: auto; }
+.faq-answer a { color: var(--pv-primary); text-decoration: underline; }
+@media (prefers-reduced-motion: reduce) { .faq-card, .faq-toggle { transition: none; } .faq-card:hover { transform: none; } }
+
+/* Empty state */
 .order-card, .order-detail-card { margin-bottom: 1rem; padding: 1.5rem; background: #fff; border: 1px solid var(--pv-line); border-radius: var(--pv-radius); box-shadow: var(--pv-shadow-sm); }
 .order-card-head, .order-detail-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .order-card h2, .order-detail-card h2 { margin: .2rem 0 1rem; font-size: 1.15rem; font-weight: 800; }

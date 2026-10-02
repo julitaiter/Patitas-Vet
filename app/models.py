@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from ckeditor_uploader.fields import RichTextUploadingField
 
 
 def catalogo_imagen_upload_to(instance, filename):
@@ -75,6 +76,22 @@ class Producto(ItemCatalogo):
     class Meta:
         verbose_name = "producto"
         verbose_name_plural = "productos"
+
+
+class PreguntaFrecuente(BasicModel):
+    pregunta = models.CharField(max_length=255, unique=True)
+    descripcion = models.TextField()
+    contenido = RichTextUploadingField(config_name="default")
+    activo = models.BooleanField(default=True)
+    orden = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        verbose_name = "pregunta frecuente"
+        verbose_name_plural = "preguntas frecuentes"
+        ordering = ["orden", "pregunta"]
+
+    def __str__(self):
+        return self.pregunta
 
 
 class DisponibilidadTurno(BasicModel):

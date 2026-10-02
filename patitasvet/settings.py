@@ -68,6 +68,8 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",
     "django_filters",
     "drf_spectacular",
+    "ckeditor",
+    "ckeditor_uploader",
 
     # Apps propias
     "app",
@@ -167,6 +169,25 @@ STATIC_ROOT = env_path("STATIC_ROOT", "staticfiles")
 
 MEDIA_URL = os.getenv("MEDIA_URL", "/media/")
 MEDIA_ROOT = env_path("MEDIA_ROOT", "media")
+
+# django-ckeditor carga archivos mediante el storage de Django (MEDIA_ROOT/uploads/).
+CKEDITOR_UPLOAD_PATH = "uploads/"
+CKEDITOR_CONFIGS = {
+    "default": {
+        "toolbar": "PatitasVet",
+        "toolbar_PatitasVet": [
+            ["Source"],
+            ["Format", "Styles"],
+            ["Bold", "Italic", "Underline", "Strike", "RemoveFormat"],
+            ["NumberedList", "BulletedList", "Outdent", "Indent", "Blockquote"],
+            ["Link", "Unlink", "Image", "Table", "HorizontalRule"],
+            ["JustifyLeft", "JustifyCenter", "JustifyRight"],
+            ["SpecialChar", "Maximize"],
+        ],
+        "height": 300,
+        "width": "100%",
+    },
+}
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -56,7 +56,7 @@ class SeoTests(TestCase):
         namespace = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
         urls = {node.text for node in root.findall("s:url/s:loc", namespace)}
         dominio = "https://jtaiter.com"
-        for ruta in (reverse("index"), reverse("listar_catalogo"), reverse("contacto:index"),
+        for ruta in (reverse("index"), reverse("listar_catalogo"), reverse("preguntas_frecuentes"), reverse("contacto:index"),
                      reverse("detalle_producto", args=[self.producto.pk]),
                      reverse("detalle_servicio", args=[self.servicio.pk])):
             self.assertIn(dominio + ruta, urls)
@@ -65,7 +65,7 @@ class SeoTests(TestCase):
         for url in urls:
             for privada in ("/admin/", "/checkout/", "/mis-pedidos/", "/mi-perfil/", "/empleado/", "/api/"):
                 self.assertNotIn(privada, url)
-        self.assertEqual(len(urls), 5)
+        self.assertEqual(len(urls), 6)
 
     def test_metadatos_publicos_y_detalle_dinamico(self):
         home = self.client.get(reverse("index"))

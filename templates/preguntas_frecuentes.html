@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}Preguntas frecuentes | Patitas Vet{% endblock %}
+{% block meta_description %}Encontrá respuestas a preguntas frecuentes sobre turnos, productos, pagos y atención en Patitas Vet.{% endblock %}
+{% block meta_keywords %}preguntas frecuentes, turnos veterinarios, productos para mascotas, pagos, Patitas Vet{% endblock %}
+{% block page_name %}preguntas-frecuentes{% endblock %}
+{% block content %}
+<section class="page-hero compact"><div class="container"><div class="page-hero-card reveal">
+    <span class="eyebrow">Te ayudamos</span>
+    <h1>Preguntas frecuentes</h1>
+    <p>Encontrá respuestas rápidas sobre nuestros turnos, productos y compras.</p>
+</div></div></section>
+<section class="faq-page section-space pt-4"><div class="container">
+    <div class="faq-grid row g-3">
+        {% for faq in preguntas_frecuentes %}
+        <div class="col-12 col-md-6 col-xl-4">
+            <article class="faq-card">
+                <h2 class="m-0">
+                    <button class="faq-question collapsed" type="button" data-bs-toggle="collapse"
+                            data-bs-target="#faq-respuesta-{{ faq.pk }}" aria-expanded="false"
+                            aria-controls="faq-respuesta-{{ faq.pk }}">
+                        <span>{{ faq.pregunta }}</span><i class="bi bi-chevron-down faq-toggle" aria-hidden="true"></i>
+                    </button>
+                </h2>
+                <div class="collapse" id="faq-respuesta-{{ faq.pk }}">
+                    <div class="faq-answer">{{ faq.contenido|safe }}</div>
+                </div>
+            </article>
+        </div>
+        {% empty %}
+        <div class="col-12"><div class="empty-state"><i class="bi bi-question-circle"></i><h2>Estamos preparando las respuestas</h2><p>Pronto vas a encontrar acá las preguntas más frecuentes.</p></div></div>
+        {% endfor %}
+    </div>
+</div></section>
+{% endblock %}
