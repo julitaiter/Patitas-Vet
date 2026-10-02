@@ -33,6 +33,18 @@ python manage.py runserver
 
 En Windows CMD, la activación es `venv\Scripts\activate`. El sitio local queda en `http://127.0.0.1:8000/` y el panel en `http://127.0.0.1:8000/admin/`. `makemigrations` se usa al cambiar modelos; no hace falta para instalar las migraciones ya incluidas.
 
+### Datos de ejemplo
+
+Para una base nueva y vacía, después de `migrate` se puede cargar un catálogo y una agenda de demostración:
+
+```bash
+python manage.py bootstrap_inicial
+```
+
+El comando crea cuatro categorías, cuatro productos, tres servicios, dos salas y quince disponibilidades semanales. Los nombres llevan `(demo)` y los precios/stock son ficticios; hay que revisarlos antes de mostrar el sitio a clientes. No crea usuarios, pedidos, datos bancarios, imágenes ni direcciones de tienda. Las preguntas frecuentes de ejemplo ya provienen de una migración.
+
+No se ejecuta automáticamente. Si la base ya tiene catálogo o agenda, se detiene sin cambiar nada para evitar mezclar datos reales y de prueba. Solo si se desea añadir los ejemplos faltantes a esa base, ejecutar `python manage.py bootstrap_inicial --allow-existing`. En ambos casos conserva los registros ya existentes y puede repetirse sin duplicar los ejemplos.
+
 ## Configuración
 
 `settings.py` lee un archivo `.env` opcional desde la raíz del proyecto. Para uso local hay valores por defecto; antes de desplegar, configurar al menos `SECRET_KEY`, `DEBUG=False` y `ALLOWED_HOSTS`. No guardar secretos reales en el repositorio.
