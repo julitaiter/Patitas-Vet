@@ -151,6 +151,8 @@
         const root = document.getElementById('cart-page');
         if (!root) return;
         const cart = getCart();
+        const checkoutActions = document.getElementById('cart-checkout-actions');
+        if (checkoutActions) checkoutActions.hidden = cart.length === 0;
         const esc = window.PatitasEscapeHtml || ((value) => String(value));
 
         if (!cart.length) {
@@ -190,7 +192,7 @@
                     <h2>Resumen</h2>
                     <div class="cart-summary-row"><span>Productos</span><strong>${totalItems(cart)}</strong></div>
                     <div class="cart-summary-total"><span>Total</span><span>${formatMoney(subtotal)}</span></div>
-                    <p class="small text-muted">El stock se valida al modificar cantidades. El checkout puede incorporarse como siguiente etapa.</p>
+                    <p class="small text-muted">El stock y los precios se vuelven a verificar al confirmar.</p>
                     <button type="button" class="btn btn-outline-danger w-100 js-cart-clear"><i class="bi bi-trash3"></i> Vaciar carrito</button>
                 </aside>
             </div>`;

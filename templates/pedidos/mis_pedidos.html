@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Mis pedidos | Patitas Vet{% endblock %}
+{% block page_name %}mis-pedidos{% endblock %}
+{% block content %}
+<section class="page-hero compact"><div class="container"><div class="page-hero-card reveal">
+  <span class="eyebrow">Tu cuenta</span><h1>Mis pedidos</h1>
+  <p>Consultá el estado, los productos y el total de tus compras.</p>
+</div></div></section>
+<section class="section-space pt-4"><div class="container">
+  {% for pedido in pagina %}
+  <article class="order-card">
+    <div class="order-card-head">
+      <div><small class="text-muted">{{ pedido.created_at|date:'d/m/Y H:i' }}</small><h2>Pedido {{ pedido.codigo }}</h2></div>
+      <span class="order-status order-status-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span>
+    </div>
+    <div class="order-card-body">
+      <div><small>Productos</small><strong>{% for item in pedido.items.all %}{{ item.producto_nombre }} × {{ item.cantidad }}{% if not forloop.last %}, {% endif %}{% endfor %}</strong></div>
+      <div><small>Entrega</small><strong>{{ pedido.get_tipo_entrega_display }}</strong></div>
+      <div><small>Pago</small><strong>{{ pedido.get_medio_pago_display }} · {{ pedido.get_estado_pago_display }}</strong></div>
+      <div><small>Total</small><strong>${{ pedido.total }}</strong></div>
+    </div>
+    <a class="btn btn-soft" href="{% url 'detalle_pedido' pedido.codigo %}">Ver detalle <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+  </article>
+  {% empty %}
+  <div class="empty-state"><i class="bi bi-bag"></i><h2>Aún no tenés pedidos</h2><p>Cuando finalices una compra, la vas a encontrar acá.</p><a class="btn btn-primary-app" href="{% url 'listar_catalogo' %}">Explorar productos</a></div>
+  {% endfor %}
+  {% if pagina.paginator.num_pages > 1 %}
+  <nav class="mt-4" aria-label="Páginas de pedidos"><ul class="pagination justify-content-center">
+    {% if pagina.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ pagina.previous_page_number }}">Anterior</a></li>{% endif %}
+    <li class="page-item active" aria-current="page"><span class="page-link">{{ pagina.number }} de {{ pagina.paginator.num_pages }}</span></li>
+    {% if pagina.has_next %}<li class="page-item"><a class="page-link" href="?page={{ pagina.next_page_number }}">Siguiente</a></li>{% endif %}
+  </ul></nav>
+  {% endif %}
+</div></section>
+{% endblock %}

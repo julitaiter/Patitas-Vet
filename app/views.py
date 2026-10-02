@@ -20,7 +20,7 @@ from .forms import (
     TurnoEmpleadoForm,
     TurnoForm,
 )
-from .models import Categoria, DisponibilidadTurno, Producto, Sala, Servicio, Turno
+from .models import Categoria, DisponibilidadTurno, Pedido, Producto, Sala, Servicio, Turno
 from .services.turnos import (
     obtener_horarios_disponibles,
     obtener_sala_disponible_para_turno,
@@ -56,9 +56,14 @@ def mi_perfil(request):
         .filter(usuario=request.user)
         .order_by("-fecha", "-hora")[:3]
     )
+    pedidos_recientes = (
+        Pedido.objects.filter(usuario=request.user)
+        .order_by("-created_at", "-pk")[:3]
+    )
 
     return render(request, "account/mi_perfil.html", {
         "turnos_recientes": turnos_recientes,
+        "pedidos_recientes": pedidos_recientes,
     })
 
 

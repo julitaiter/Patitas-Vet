@@ -2,6 +2,28 @@
 {% block title %}Carrito | Patitas Vet{% endblock %}
 {% block page_name %}carrito{% endblock %}
 {% block content %}
-<section class="page-hero compact"><div class="container"><div class="page-hero-card reveal"><span class="eyebrow">Tu selección</span><h1>Carrito</h1><p>Revisá cantidades y productos antes de continuar.</p></div></div></section>
-<section class="section-space pt-4"><div class="container"><div id="cart-page" class="cart-page reveal"><div class="cart-loading"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando carrito...</div></div><noscript><div class="alert alert-warning mt-4">Necesitás JavaScript habilitado para utilizar el carrito.</div></noscript></div></section>
+<section class="page-hero compact">
+    <div class="container">
+        <div class="page-hero-card reveal"><span class="eyebrow">Tu selección</span>
+            <h1>Carrito</h1>
+            <p>Revisá cantidades y productos antes de continuar.</p>
+        </div>
+    </div>
+</section>
+<section class="section-space pt-4">
+    <div class="container">
+        <div id="cart-page" class="cart-page reveal">
+            <div class="cart-loading"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span> Cargando
+                carrito...</div>
+        </div>
+        <div id="cart-checkout-actions" class="text-end mt-3" hidden>
+            <a class="btn btn-primary-app btn-lg" href="{% url 'checkout' %}">
+                Finalizar compra <i class="bi bi-arrow-right" aria-hidden="true"></i>
+            </a>
+        </div>
+        <noscript>
+            <div class="alert alert-warning mt-4">Necesitás JavaScript habilitado para utilizar el carrito.</div>
+        </noscript>
+    </div>
+</section>
 {% endblock %}

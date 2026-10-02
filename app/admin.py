@@ -15,7 +15,10 @@ from .models import (
     Sala,
     Servicio,
     Turno,
+    Pedido, PedidoItem, ComprobanteTransferencia, CuentaTransferencia,
+    ConfiguracionCheckout, HistorialEstadoPedido,
 )
+from .services.pedidos import PedidoError, cambiar_estado_pedido
 
 
 class BasicAdminMixin:
@@ -912,3 +915,111 @@ class TurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
             nuevo_estado=Turno.ESTADO_PENDIENTE,
             etiqueta_estado="pendiente",
         )
+
+
+class PedidoItemInline(admin.TabularInline):
+    model = PedidoItem
+    extra = 0
+    can_delete = False
+    readonly_fields = ["producto", "producto_nombre", "precio_unitario", "cantidad", "subtotal"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+class ComprobanteInline(admin.StackedInline):
+    model = ComprobanteTransferencia
+    extra = 0
+    can_delete = False
+    readonly_fields = ["archivo", "nombre_original", "content_type", "tamanio", "created_at", "updated_at"]
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Pedido)
+class PedidoAdmin(admin.ModelAdmin):
+    list_display = ["codigo", "usuario", "estado", "estado_pago", "tipo_entrega", "medio_pago", "total", "created_at"]
+    list_filter = ["estado", "estado_pago", "tipo_entrega", "medio_pago", "tipo_factura", "created_at"]
+    search_fields = ["codigo", "usuario__username", "comprador_nombre", "comprador_apellido", "comprador_email", "comprador_dni"]
+    inlines = [PedidoItemInline, ComprobanteInline]
+    actions = None
+
+    def get_readonly_fields(self, request, obj=None):
+        return [f.name for f in Pedido._meta.fields if f.name not in ("estado", "estado_pago")]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def save_model(self, request, obj, form, change):
+        anterior = Pedido.objects.get(pk=obj.pk)
+        if obj.estado != anterior.estado:
+            try:
+                cambiar_estado_pedido(anterior, obj.estado, request.user)
+            except PedidoError as exc:
+                self.message_user(request, str(exc), level=messages.ERROR)
+        if obj.estado_pago != anterior.estado_pago:
+            Pedido.objects.filter(pk=obj.pk).update(estado_pago=obj.estado_pago)
+
+
+@admin.register(PedidoItem)
+class PedidoItemAdmin(admin.ModelAdmin):
+    list_display = ["pedido", "producto_nombre", "cantidad", "precio_unitario", "subtotal"]
+    readonly_fields = ["pedido", "producto", "producto_nombre", "precio_unitario", "cantidad", "subtotal"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ComprobanteTransferencia)
+class ComprobanteTransferenciaAdmin(admin.ModelAdmin):
+    list_display = ["pedido", "nombre_original", "content_type", "tamanio", "created_at"]
+    readonly_fields = ["pedido", "archivo", "nombre_original", "content_type", "tamanio", "created_at", "updated_at"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(CuentaTransferencia)
+class CuentaTransferenciaAdmin(BasicAdminMixin, admin.ModelAdmin):
+    list_display = ["banco", "titular", "alias", "activa", "principal"]
+    list_filter = ["activa", "principal"]
+    search_fields = ["banco", "titular", "alias", "cbu_cvu"]
+
+
+@admin.register(ConfiguracionCheckout)
+class ConfiguracionCheckoutAdmin(BasicAdminMixin, admin.ModelAdmin):
+    fieldsets = (
+        ("Envío", {"fields": ("costo_envio", "envio_gratis_desde"),
+                   "description": "El mínimo para envío gratis se calcula sobre el subtotal. Dejalo vacío para cobrar siempre el envío a domicilio."}),
+        ("Retiro por tienda", {"fields": ("nombre_tienda", "direccion_tienda", "indicaciones_retiro")}),
+        ("Notificaciones y comprobantes", {"fields": ("email_negocio", "comprobante_max_mb")}),
+        ("Fechas", {"fields": ("created_at", "updated_at")}),
+    )
+
+    def has_add_permission(self, request):
+        return not ConfiguracionCheckout.objects.exists() and super().has_add_permission(request)
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(HistorialEstadoPedido)
+class HistorialEstadoPedidoAdmin(admin.ModelAdmin):
+    list_display = ["pedido", "estado_anterior", "estado_nuevo", "usuario", "fecha"]
+    readonly_fields = ["pedido", "estado_anterior", "estado_nuevo", "usuario", "fecha", "observacion"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

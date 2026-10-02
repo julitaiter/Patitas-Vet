@@ -1,0 +1,6 @@
+Nuevo pedido {{ pedido.codigo }} de {{ pedido.comprador_nombre }} {{ pedido.comprador_apellido }} ({{ pedido.comprador_email }}, {{ pedido.comprador_telefono }}).
+{% for item in pedido.items.all %}{{ item.producto_nombre }} × {{ item.cantidad }}: ${{ item.subtotal }}
+{% endfor %}
+Entrega: {{ pedido.get_tipo_entrega_display }}
+Pago: {{ pedido.get_medio_pago_display }}
+Total: ${{ pedido.total }}

@@ -81,12 +81,14 @@
 <section class="section-space pt-0">
     <div class="container">
         <div class="cta-panel reveal">
-            <div>
+            <div class="text-center">
                 <span class="eyebrow eyebrow-light">Tu próxima visita</span>
-                <h2>Reservá cuando tengas tiempo. Nosotros organizamos el resto.</h2>
+                <h2 class="w-100">Reservá cuando tengas tiempo.<br>Nosotros nos encargamos del resto.</h2>
+                <div class="d-flex justify-content-center w-100">
+                    <a href="{% url 'listar_catalogo' %}" class="btn btn-light btn-lg">Buscar un servicio</a>
+                </div>
                 <p>Elegí un servicio, seleccioná fecha y horario, y confirmá tu turno en pocos pasos.</p>
             </div>
-            <a href="{% url 'listar_catalogo' %}" class="btn btn-light btn-lg">Buscar un servicio</a>
         </div>
     </div>
 </section>

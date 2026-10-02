@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Checkout | Patitas Vet{% endblock %}
+{% block page_name %}checkout{% endblock %}
+{% block content %}
+<section class="section-space pt-4"><div class="container">
+{% if pedido %}
+  <div class="checkout-success mx-auto" data-clear-cart="{{ limpiar_carrito|yesno:'true,false' }}">
+    <i class="bi bi-check-circle-fill text-success display-3"></i>
+    <h1>Pedido recibido</h1><p>Tu código es <strong>{{ pedido.codigo }}</strong>.</p>
+    <p>Estado: {{ pedido.get_estado_display }} · {{ pedido.get_medio_pago_display }} · {{ pedido.get_tipo_entrega_display }}</p>
+    {% if pedido.medio_pago == 'transferencia' %}<p>Recibimos el comprobante. El pago está pendiente de validación.</p>{% else %}<p>Abonás al momento de retirar o recibir el pedido.</p>{% endif %}
+    <ul class="list-group mb-3">{% for item in pedido.items.all %}<li class="list-group-item d-flex justify-content-between"><span>{{ item.producto_nombre }} × {{ item.cantidad }}</span><strong>${{ item.subtotal }}</strong></li>{% endfor %}</ul>
+    <p class="fs-4 fw-bold">Total: ${{ pedido.total }}</p><div class="d-flex justify-content-center flex-wrap gap-2"><a class="btn btn-primary-app" href="{% url 'detalle_pedido' pedido.codigo %}">Ver mi pedido</a><a class="btn btn-soft" href="{% url 'listar_catalogo' %}">Seguir explorando</a></div>
+  </div>
+{% else %}
+  <div class="mb-4"><span class="eyebrow">Tu compra</span><h1>Finalizar compra</h1><p>Completá tus datos y revisá el resumen antes de confirmar.</p></div>
+  <div class="row g-4"><div class="col-lg-8">
+    <div class="checkout-stepper" aria-label="Progreso de compra"><div class="checkout-progress"><span id="checkout-progress-fill"></span></div>
+      <div class="checkout-steps"><span>Comprador y facturación</span><span>Entrega y destinatario</span><span>Pago</span><span>Confirmación</span></div>
+    </div>
+    {% if form.errors %}<div class="alert alert-danger" role="alert">Revisá los datos señalados y volvé a intentar.{% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}</div>{% endif %}
+    <form id="checkout-form" method="post" enctype="multipart/form-data" novalidate data-shipping="{{ configuracion.costo_envio }}" data-free-threshold="{{ configuracion.envio_gratis_desde|default_if_none:'' }}">
+      {% csrf_token %}{{ form.cart_payload }}{{ form.tipo_factura.as_hidden }}
+      <section class="checkout-step-panel" data-step="0"><h2>1. Comprador y facturación</h2>
+        <h3 class="checkout-subheading">Datos del comprador</h3>
+        <div class="row"><div class="col-sm-6">{% include 'carrito/_field.html' with field=form.comprador_nombre %}</div><div class="col-sm-6">{% include 'carrito/_field.html' with field=form.comprador_apellido %}</div></div>
+        {% include 'carrito/_field.html' with field=form.comprador_email %}
+        <div class="row"><div class="col-sm-6">{% include 'carrito/_field.html' with field=form.comprador_telefono %}</div><div class="col-sm-6">{% include 'carrito/_field.html' with field=form.comprador_dni %}</div></div>
+        <h3 class="checkout-subheading">Facturación</h3>
+        <p class="text-muted small">Si no solicitás una factura especial, se emitirá Factura B.</p>
+        <label class="form-check mb-3"><input class="form-check-input" type="checkbox" id="solicitar-factura-especial" {% if form.tipo_factura.value == 'A' or form.tipo_factura.value == 'E' %}checked{% endif %}> <span class="form-check-label">Quiero solicitar Factura A o E</span></label>
+        <fieldset id="factura-especial-opciones" hidden><legend class="fs-6 fw-semibold">Elegí el tipo de factura</legend>
+          <label class="form-check form-check-inline"><input class="form-check-input" type="radio" name="factura_especial_opcion" value="A" {% if form.tipo_factura.value == 'A' %}checked{% endif %}> <span class="form-check-label">Factura A</span></label>
+          <label class="form-check form-check-inline"><input class="form-check-input" type="radio" name="factura_especial_opcion" value="E" {% if form.tipo_factura.value == 'E' %}checked{% endif %}> <span class="form-check-label">Factura E</span></label>
+        </fieldset>
+        {% for error in form.tipo_factura.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        <div id="factura-b-fields"><label class="form-check mb-3" for="{{ form.facturacion_mismos_datos.id_for_label }}">{{ form.facturacion_mismos_datos }} <span class="form-check-label">{{ form.facturacion_mismos_datos.label }}</span></label>
+          <div id="factura-b-otros" hidden>{% include 'carrito/_field.html' with field=form.facturacion_nombre %}{% include 'carrito/_field.html' with field=form.facturacion_apellido %}{% include 'carrito/_field.html' with field=form.facturacion_dni %}</div>
+        </div>
+        <div id="factura-ae-fields" hidden>{% include 'carrito/_field.html' with field=form.facturacion_cuit %}{% include 'carrito/_field.html' with field=form.facturacion_razon_social %}{% include 'carrito/_field.html' with field=form.facturacion_condicion_iva %}<div id="factura-pais" hidden>{% include 'carrito/_field.html' with field=form.facturacion_pais %}</div></div>
+        <div id="factura-domicilio" hidden>{% include 'carrito/_field.html' with field=form.facturacion_domicilio %}</div>
+      </section>
+      <section class="checkout-step-panel" data-step="1" hidden><h2>2. Entrega y destinatario</h2>
+        <fieldset><legend class="fs-6 fw-semibold">{{ form.tipo_entrega.label }} <small class="text-muted fw-normal">(elegí una opción para continuar)</small></legend>
+        {% if retiro_disponible %}<label class="delivery-option"><input type="radio" name="tipo_entrega" value="retiro" {% if form.tipo_entrega.value == 'retiro' %}checked{% endif %}> <strong>Retiro en tienda</strong></label>{% endif %}
+        <label class="delivery-option"><input type="radio" name="tipo_entrega" value="envio" {% if form.tipo_entrega.value == 'envio' %}checked{% endif %}> <strong>Envío a domicilio</strong></label></fieldset>
+        {% for error in form.tipo_entrega.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        <div id="retiro-fields" hidden><p class="small text-muted">Retirás en <strong>{{ configuracion.nombre_tienda }}</strong>, {{ configuracion.direccion_tienda }}. El retiro no tiene costo de envío.{% if configuracion.indicaciones_retiro %}<br>{{ configuracion.indicaciones_retiro }}{% endif %}</p></div>
+        <div id="envio-fields" hidden><div class="row"><div class="col-sm-8">{% include 'carrito/_field.html' with field=form.envio_calle %}</div><div class="col-sm-4">{% include 'carrito/_field.html' with field=form.envio_altura %}</div></div>
+        {% include 'carrito/_field.html' with field=form.envio_piso_departamento %}<div class="row"><div class="col-sm-6">{% include 'carrito/_field.html' with field=form.envio_localidad %}</div><div class="col-sm-6">{% include 'carrito/_field.html' with field=form.envio_provincia %}</div></div>{% include 'carrito/_field.html' with field=form.envio_codigo_postal %}{% include 'carrito/_field.html' with field=form.envio_referencias %}</div>
+        <h3 class="checkout-subheading" id="destinatario-heading">Persona que recibe o retira</h3>
+        <label class="form-check mb-3" for="{{ form.receptor_mismos_datos.id_for_label }}">{{ form.receptor_mismos_datos }} <span class="form-check-label">{{ form.receptor_mismos_datos.label }}</span></label>
+        <div id="receptor-otros" hidden>{% include 'carrito/_field.html' with field=form.receptor_nombre %}{% include 'carrito/_field.html' with field=form.receptor_apellido %}{% include 'carrito/_field.html' with field=form.receptor_dni %}{% include 'carrito/_field.html' with field=form.receptor_telefono %}</div>
+      </section>
+      <section class="checkout-step-panel" data-step="2" hidden><h2>3. Medio de pago</h2>
+        <fieldset><legend class="fs-6 fw-semibold">{{ form.medio_pago.label }}</legend>
+        <label class="payment-option"><input type="radio" name="medio_pago" value="efectivo" {% if form.medio_pago.value == 'efectivo' %}checked{% endif %}> <strong>Efectivo al retirar o recibir</strong></label>
+        {% if cuenta %}<label class="payment-option"><input type="radio" name="medio_pago" value="transferencia" {% if form.medio_pago.value == 'transferencia' %}checked{% endif %}> <strong>Transferencia bancaria</strong></label>{% endif %}</fieldset>
+        {% for error in form.medio_pago.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+        <div id="transferencia-fields" hidden><button type="button" class="btn btn-soft mb-3" data-bs-toggle="modal" data-bs-target="#transferencia-modal">Ver datos bancarios</button>{% include 'carrito/_field.html' with field=form.comprobante %}</div>
+      </section>
+      <section class="checkout-step-panel" data-step="3" hidden><h2>4. Confirmación</h2><p>Verificá tus datos y el total antes de crear el pedido. El stock se confirmará al enviar.</p><label class="form-check" for="confirmar-datos"><input class="form-check-input" type="checkbox" id="confirmar-datos" required> <span class="form-check-label">Confirmo que los datos son correctos.</span></label></section>
+      <div class="checkout-actions"><button type="button" class="btn btn-soft" id="checkout-back" hidden>Volver</button><button type="button" class="btn btn-primary-app" id="checkout-next">Continuar</button><button type="submit" class="btn btn-primary-app" id="checkout-submit" hidden>Confirmar pedido</button></div>
+    </form>
+  </div><div class="col-lg-4"><aside class="checkout-summary"><h2>Resumen del pedido</h2><div id="checkout-items"></div><div class="cart-summary-row"><span>Productos</span><strong id="checkout-count">0</strong></div><div class="cart-summary-row"><span>Subtotal</span><strong id="checkout-subtotal">$0</strong></div><div class="cart-summary-row"><span>Envío</span><strong id="checkout-shipping">$0</strong></div><div class="cart-summary-total"><span>Total</span><strong id="checkout-total">$0</strong></div><small>Los precios y el stock se verifican al confirmar.</small></aside></div></div>
+  {% if cuenta %}<div class="modal fade" id="transferencia-modal" tabindex="-1" aria-labelledby="transferencia-title" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h2 class="modal-title fs-5" id="transferencia-title">Datos para transferencia</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div><div class="modal-body"><dl><dt>Banco</dt><dd>{{ cuenta.banco }}</dd><dt>Titular</dt><dd>{{ cuenta.titular }}</dd><dt>CUIT</dt><dd>{{ cuenta.cuit }}</dd><dt>Tipo de cuenta / moneda</dt><dd>{{ cuenta.tipo_cuenta }} · {{ cuenta.moneda }}</dd><dt>Alias</dt><dd>{{ cuenta.alias }} <button class="btn btn-sm btn-soft copy-button" type="button" data-copy="{{ cuenta.alias }}">Copiar alias</button></dd><dt>CBU/CVU</dt><dd>{{ cuenta.cbu_cvu }} <button class="btn btn-sm btn-soft copy-button" type="button" data-copy="{{ cuenta.cbu_cvu }}">Copiar CBU/CVU</button></dd></dl><p>{{ cuenta.observaciones }}</p><div id="copy-feedback" aria-live="polite"></div></div></div></div></div>{% endif %}
+{% endif %}
+</div></section>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'js/checkout.js' %}"></script>{% endblock %}

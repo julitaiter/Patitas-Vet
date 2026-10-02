@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Pedido {{ pedido.codigo }} | Patitas Vet{% endblock %}
+{% block page_name %}detalle-pedido{% endblock %}
+{% block content %}
+<section class="section-space pt-4"><div class="container">
+  <a class="back-link" href="{% url 'mis_pedidos' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> Mis pedidos</a>
+  <div class="order-detail-header"><div><span class="eyebrow">Compra del {{ pedido.created_at|date:'d/m/Y H:i' }}</span><h1>Pedido {{ pedido.codigo }}</h1></div><span class="order-status order-status-{{ pedido.estado }}">{{ pedido.get_estado_display }}</span></div>
+  <div class="row g-4"><div class="col-lg-8">
+    <section class="order-detail-card"><h2>Productos</h2>
+      {% for item in pedido.items.all %}<div class="order-detail-item"><div><strong>{{ item.producto_nombre }}</strong><small>{{ item.cantidad }} × ${{ item.precio_unitario }}</small></div><strong>${{ item.subtotal }}</strong></div>{% endfor %}
+      <div class="cart-summary-row"><span>Subtotal</span><strong>${{ pedido.subtotal }}</strong></div>
+      <div class="cart-summary-row"><span>Envío</span><strong>${{ pedido.costo_envio }}</strong></div>
+      <div class="cart-summary-total"><span>Total</span><strong>${{ pedido.total }}</strong></div>
+    </section>
+    <section class="order-detail-card mt-4"><h2>Entrega</h2><p><strong>{{ pedido.get_tipo_entrega_display }}</strong></p>
+      {% if pedido.tipo_entrega == 'envio' %}<p>{{ pedido.envio_calle }} {{ pedido.envio_altura }}{% if pedido.envio_piso_departamento %}, {{ pedido.envio_piso_departamento }}{% endif %}<br>{{ pedido.envio_localidad }}, {{ pedido.envio_provincia }} ({{ pedido.envio_codigo_postal }})</p>{% if pedido.envio_referencias %}<p class="text-muted">Referencias: {{ pedido.envio_referencias }}</p>{% endif %}{% endif %}
+      <p class="mb-0"><small class="text-muted">Persona que {% if pedido.tipo_entrega == 'retiro' %}retira{% else %}recibe{% endif %}</small><br>{% if pedido.receptor_mismos_datos %}{{ pedido.comprador_nombre }} {{ pedido.comprador_apellido }}{% else %}{{ pedido.receptor_nombre }} {{ pedido.receptor_apellido }} · DNI {{ pedido.receptor_dni }}{% endif %}</p>
+    </section>
+  </div><div class="col-lg-4">
+    <section class="order-detail-card"><h2>Estado y pago</h2><dl class="profile-data"><div><dt>Pedido</dt><dd>{{ pedido.get_estado_display }}</dd></div><div><dt>Pago</dt><dd>{{ pedido.get_estado_pago_display }}</dd></div><div><dt>Medio</dt><dd>{{ pedido.get_medio_pago_display }}</dd></div>{% if pedido.medio_pago == 'transferencia' %}<div><dt>Comprobante</dt><dd>{% if pedido.comprobante %}Recibido{% else %}Pendiente{% endif %}</dd></div>{% endif %}</dl></section>
+    <section class="order-detail-card mt-4"><h2>Datos de compra</h2><dl class="profile-data"><div><dt>Comprador</dt><dd>{{ pedido.comprador_nombre }} {{ pedido.comprador_apellido }}</dd></div><div><dt>Email</dt><dd>{{ pedido.comprador_email }}</dd></div><div><dt>Factura</dt><dd>{{ pedido.get_tipo_factura_display }}</dd></div></dl></section>
+  </div></div>
+</div></section>
+{% endblock %}

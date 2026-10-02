@@ -1,0 +1,12 @@
+Hola {{ pedido.comprador_nombre }}, recibimos tu pedido {{ pedido.codigo }}.
+
+{% for item in pedido.items.all %}{{ item.producto_nombre }} × {{ item.cantidad }}: ${{ item.subtotal }}
+{% endfor %}
+Subtotal: ${{ pedido.subtotal }}
+Envío: ${{ pedido.costo_envio }}
+Total: ${{ pedido.total }}
+Entrega: {{ pedido.get_tipo_entrega_display }}
+Pago: {{ pedido.get_medio_pago_display }}
+Estado: {{ pedido.get_estado_display }}
+
+Patitas Vet

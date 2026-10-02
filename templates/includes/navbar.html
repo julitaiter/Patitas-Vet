@@ -54,6 +54,7 @@
                             <li><h6 class="dropdown-header">Tu cuenta</h6></li>
                             <li><a class="dropdown-item" href="{% url 'mi_perfil' %}"><i class="bi bi-person-circle"></i> Mi perfil</a></li>
                             <li><a class="dropdown-item" href="{% url 'mis_turnos' %}"><i class="bi bi-calendar2-check"></i> Mis turnos</a></li>
+                            <li><a class="dropdown-item" href="{% url 'mis_pedidos' %}"><i class="bi bi-bag-check"></i> Mis pedidos</a></li>
                             {% if user.is_staff %}
                                 <li><hr class="dropdown-divider"></li>
                                 <li><h6 class="dropdown-header">Administración</h6></li>
