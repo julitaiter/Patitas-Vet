@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /accounts/
+Disallow: /mi-perfil/
+Disallow: /mis-pedidos/
+Disallow: /checkout/
+Disallow: /carrito/
+Disallow: /turnos/
+Disallow: /empleado/
+Disallow: /api/
+Disallow: /ajax/
+Disallow: /catalogo/nuevo/
+
+Sitemap: https://{{ domain }}/sitemap.xml

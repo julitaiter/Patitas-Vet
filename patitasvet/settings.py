@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.sites",
+    "django.contrib.sitemaps",
 
     # Librerias de terceros
     "captcha",
@@ -168,6 +170,7 @@ MEDIA_ROOT = env_path("MEDIA_ROOT", "media")
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+SITE_ID = 1
 
 CHECKOUT_DRAFT_TTL = int(os.getenv("CHECKOUT_DRAFT_TTL", "7200"))
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend")

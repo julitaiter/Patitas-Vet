@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block title %}{{ item.nombre }} | Patitas Vet{% endblock %}
+{% block meta_description %}{{ item.descripcion|striptags|truncatechars:155 }}{% endblock %}
+{% block meta_keywords %}{{ item.nombre }}, {{ item.categoria.nombre }}, {% if model == 'producto' %}producto para mascotas{% else %}servicio veterinario{% endif %}, Patitas Vet{% endblock %}
 
 {% block content %}
 <section class="container my-5">
