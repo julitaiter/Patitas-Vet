@@ -477,6 +477,32 @@ class AnimacionCarritoYAdminTests(TestCase):
         self.assertContains(response, "js-scroll-section")
         self.assertContains(response, "home-hero-carousel")
 
+    def test_home_tiene_tres_slides_con_contenido_fijo(self):
+        response = self.client.get(reverse("index"))
+        html = response.content.decode()
+
+        self.assertEqual(html.count('class="carousel-item'), 3)
+        self.assertContains(response, "Tu mascota, siempre en buenas manos")
+        self.assertContains(response, "Elegí el momento para su próxima visita")
+        self.assertContains(response, "Encontrá productos para su día a día")
+        self.assertContains(response, 'data-bs-slide-to="2"')
+        self.assertContains(response, 'aria-label="Pausar carrusel"')
+        self.assertContains(response, "css/home.css")
+        for number in (1, 2, 3):
+            self.assertContains(response, f"img/carousel/{number}.jpg")
+
+    def test_servicios_destacados_no_quedan_ocultos_por_dos_animaciones(self):
+        response = self.client.get(reverse("index"))
+        animacion = (
+            Path(settings.BASE_DIR) / "static" / "js" / "home-animation.js"
+        ).read_text(encoding="utf-8")
+
+        self.assertNotContains(response, "section-heading reveal js-scroll-heading")
+        self.assertNotContains(response, "col-md-6 col-xl-4 reveal")
+        self.assertIn("timeline.fromTo(heading", animacion)
+        self.assertIn("timeline.fromTo(items", animacion)
+        self.assertEqual(animacion.count("autoAlpha: 1"), 2)
+
     def test_catalogo_incluye_la_misma_animacion(self):
         response = self.client.get(reverse("listar_catalogo"))
 

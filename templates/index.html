@@ -5,50 +5,67 @@
 
 {% block title %}Patitas Vet | Cuidado simple para tu mascota{% endblock %}
 {% block page_name %}home{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'css/home.css' %}">{% endblock %}
 
 {% block content %}
-<section class="hero-section section-space">
-    <div class="container">
-        <div class="hero-panel reveal">
-            <div class="row align-items-center g-5">
-                <div class="col-lg-7">
-                    <span class="eyebrow"><i class="bi bi-stars"></i> Veterinaria, turnos y tienda en un solo lugar</span>
-                    <h1 class="hero-title">Cuidar a quienes te acompañan debería sentirse <span>simple.</span></h1>
-                    <p class="hero-copy">Reservá turnos, explorá servicios y encontrá productos para tu mascota desde una experiencia clara, rápida y cercana.</p>
-                    <div class="d-flex flex-wrap gap-3 hero-actions">
-                        <a href="{% url 'listar_catalogo' %}" class="btn btn-primary-app btn-lg">Explorar catálogo <i class="bi bi-arrow-right"></i></a>
-                        {% if user.is_authenticated %}
-                            <a href="{% url 'mis_turnos' %}" class="btn btn-soft btn-lg">Ver mis turnos</a>
-                        {% else %}
-                            <a href="{% url 'account_signup' %}" class="btn btn-soft btn-lg">Crear mi cuenta</a>
-                        {% endif %}
-                    </div>
-                    <div class="hero-trust-row">
-                        <div><i class="bi bi-calendar2-check"></i><span><strong>Turnos online</strong><small>Disponibilidad en tiempo real</small></span></div>
-                        <div><i class="bi bi-shield-check"></i><span><strong>Atención organizada</strong><small>Todo en un mismo lugar</small></span></div>
-                    </div>
+<section id="homeHeroCarousel" class="carousel slide home-hero-carousel" aria-label="Destacados de Patitas Vet" data-bs-ride="carousel" data-bs-interval="6500">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#homeHeroCarousel" data-bs-slide-to="0" class="active" aria-current="true" aria-label="Ir a la primera diapositiva"></button>
+        <button type="button" data-bs-target="#homeHeroCarousel" data-bs-slide-to="1" aria-label="Ir a la segunda diapositiva"></button>
+        <button type="button" data-bs-target="#homeHeroCarousel" data-bs-slide-to="2" aria-label="Ir a la tercera diapositiva"></button>
+    </div>
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            <img src="{% static 'img/carousel/1.jpg' %}" class="d-block w-100 carousel-img" alt="Veterinaria atendiendo a un perro" fetchpriority="high">
+            <div class="carousel-caption">
+                <div class="home-slide-content">
+                    <span class="home-slide-kicker">Cuidado que acompaña</span>
+                    <h1>Tu mascota, siempre en buenas manos</h1>
+                    <p>Conocé nuestros servicios y encontrá la atención que necesita.</p>
+                    <a href="{% url 'listar_catalogo' %}" class="btn btn-light btn-lg">Explorar servicios <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                 </div>
-                <div class="col-lg-5">
-                    <div class="hero-visual" aria-hidden="true">
-                        <div class="hero-orb hero-orb-one"></div>
-                        <div class="hero-orb hero-orb-two"></div>
-                        <div class="hero-pet-card hero-pet-main">
-                            <span class="pet-icon"><i class="bi bi-heart-pulse"></i></span>
-                            <strong>Tu mascota primero</strong>
-                            <small>Una experiencia pensada para acompañar su cuidado.</small>
-                        </div>
-                        <div class="hero-pet-card hero-pet-float-one"><i class="bi bi-calendar-heart"></i><span>Turnos simples</span></div>
-                        <div class="hero-pet-card hero-pet-float-two"><i class="bi bi-bag-heart"></i><span>Productos</span></div>
-                    </div>
+            </div>
+        </div>
+        <div class="carousel-item">
+            <img src="{% static 'img/carousel/2.jpg' %}" class="d-block w-100 carousel-img" alt="Profesional cuidando a un perro" loading="lazy">
+            <div class="carousel-caption">
+                <div class="home-slide-content">
+                    <span class="home-slide-kicker">Turnos online</span>
+                    <h2>Elegí el momento para su próxima visita</h2>
+                    <p>Consultá los servicios y seleccioná un horario disponible.</p>
+                    <a href="{% url 'listar_catalogo' %}" class="btn btn-light btn-lg">Buscar un servicio <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="carousel-item">
+            <img src="{% static 'img/carousel/3.jpg' %}" class="d-block w-100 carousel-img" alt="Alimentos y productos para mascotas" loading="lazy">
+            <div class="carousel-caption">
+                <div class="home-slide-content">
+                    <span class="home-slide-kicker">Tienda para mascotas</span>
+                    <h2>Encontrá productos para su día a día</h2>
+                    <p>Explorá el catálogo, elegí lo que necesitás y comprá online.</p>
+                    <a href="{% url 'listar_catalogo' %}" class="btn btn-light btn-lg">Ver productos <i class="bi bi-arrow-right" aria-hidden="true"></i></a>
                 </div>
             </div>
         </div>
     </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#homeHeroCarousel" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Diapositiva anterior</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#homeHeroCarousel" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Diapositiva siguiente</span>
+    </button>
+    <button class="home-carousel-toggle js-home-carousel-toggle" type="button" aria-label="Pausar carrusel" aria-pressed="false">
+        <i class="bi bi-pause-fill" aria-hidden="true"></i>
+        <span>Pausar</span>
+    </button>
 </section>
 
-<section class="section-space pt-0">
+<section class="section-space js-scroll-section">
     <div class="container">
-        <div class="section-heading reveal">
+        <div class="section-heading js-scroll-heading">
             <div>
                 <span class="eyebrow">Servicios destacados</span>
                 <h2>Todo lo importante, más cerca</h2>
@@ -57,9 +74,9 @@
             <a href="{% url 'listar_catalogo' %}" class="text-link">Ver catálogo completo <i class="bi bi-arrow-right"></i></a>
         </div>
 
-        <div class="row g-4">
+        <div class="row g-4 js-scroll-items">
             {% for servicio in servicios_destacados %}
-                <div class="col-md-6 col-xl-4 reveal">
+                <div class="col-md-6 col-xl-4">
                     <article class="feature-card h-100">
                         <div class="feature-card-icon"><i class="bi bi-heart-pulse"></i></div>
                         <span class="feature-card-kicker">{{ servicio.categoria.nombre }}</span>
@@ -73,16 +90,16 @@
                 </div>
             {% empty %}
                 <div class="col-12">
-                    <div class="empty-state reveal"><i class="bi bi-heart"></i><h3>Estamos preparando nuestros servicios</h3><p>Muy pronto vas a poder encontrarlos acá.</p></div>
+                    <div class="empty-state"><i class="bi bi-heart"></i><h3>Estamos preparando nuestros servicios</h3><p>Muy pronto vas a poder encontrarlos acá.</p></div>
                 </div>
             {% endfor %}
         </div>
     </div>
 </section>
 
-<section class="section-space pt-0">
+<section class="section-space pt-0 js-scroll-section">
     <div class="container">
-        <div class="cta-panel reveal">
+        <div class="cta-panel js-scroll-items">
             <div class="text-center">
                 <span class="eyebrow eyebrow-light">Tu próxima visita</span>
                 <h2 class="w-100">Reservá cuando tengas tiempo.<br>Nosotros nos encargamos del resto.</h2>
@@ -94,4 +111,10 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script>
+<script src="{% static 'js/home-animation.js' %}"></script>
 {% endblock %}
