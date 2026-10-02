@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     "drf_spectacular",
     "ckeditor",
     "ckeditor_uploader",
+    "simple_history",
 
     # Apps propias
     "app",
@@ -87,6 +88,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",

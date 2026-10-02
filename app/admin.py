@@ -6,6 +6,7 @@ from django.template.response import TemplateResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
+from simple_history.admin import SimpleHistoryAdmin
 
 from .forms import AjustarStockForm
 from .models import (
@@ -112,6 +113,17 @@ class CatalogoAdminMixin(BasicAdminMixin):
     def destacado_icono(self, obj):
         return obj.destacado
 
+    @staticmethod
+    def _actualizar_items(queryset, campo, valor):
+        # queryset.update() no dispara las señales que generan historial.
+        total = 0
+        with transaction.atomic():
+            for item in queryset.select_for_update().order_by("pk"):
+                setattr(item, campo, valor)
+                item.save(update_fields=[campo, "updated_at"])
+                total += 1
+        return total
+
     @admin.action(description="Activar seleccionados")
     def activar_items(self, request, queryset):
         queryset_a_actualizar = queryset.filter(activo=False)
@@ -125,7 +137,7 @@ class CatalogoAdminMixin(BasicAdminMixin):
             )
             return
 
-        queryset_a_actualizar.update(activo=True, updated_at=timezone.now())
+        self._actualizar_items(queryset_a_actualizar, "activo", True)
 
         self.message_user(
             request,
@@ -146,7 +158,7 @@ class CatalogoAdminMixin(BasicAdminMixin):
             )
             return
 
-        queryset_a_actualizar.update(activo=False, updated_at=timezone.now())
+        self._actualizar_items(queryset_a_actualizar, "activo", False)
 
         self.message_user(
             request,
@@ -167,7 +179,7 @@ class CatalogoAdminMixin(BasicAdminMixin):
             )
             return
 
-        queryset_a_actualizar.update(destacado=True, updated_at=timezone.now())
+        self._actualizar_items(queryset_a_actualizar, "destacado", True)
 
         self.message_user(
             request,
@@ -188,8 +200,7 @@ class CatalogoAdminMixin(BasicAdminMixin):
             )
             return
 
-        queryset_a_actualizar.update(
-            destacado=False, updated_at=timezone.now())
+        self._actualizar_items(queryset_a_actualizar, "destacado", False)
 
         self.message_user(
             request,
@@ -517,7 +528,7 @@ class DisponibilidadTurnoAdmin(BasicAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(Servicio)
-class ServicioAdmin(CatalogoAdminMixin, admin.ModelAdmin):
+class ServicioAdmin(CatalogoAdminMixin, SimpleHistoryAdmin):
     list_display = [
         "imagen_preview",
         "nombre",
@@ -596,7 +607,7 @@ class ServicioAdmin(CatalogoAdminMixin, admin.ModelAdmin):
 
 
 @admin.register(Producto)
-class ProductoAdmin(CatalogoAdminMixin, admin.ModelAdmin):
+class ProductoAdmin(CatalogoAdminMixin, SimpleHistoryAdmin):
     list_display = [
         "imagen_preview",
         "nombre",

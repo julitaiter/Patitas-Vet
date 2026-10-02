@@ -97,6 +97,10 @@ def crear_pedido(*, usuario, datos, carrito, configuracion):
         # El UPDATE condicional protege también en SQLite, donde select_for_update no bloquea filas.
         if not Producto.objects.filter(pk=producto.pk, activo=True, stock__gte=cantidad).update(stock=F("stock") - cantidad):
             raise PedidoError(f"No hay stock suficiente de {producto.nombre}.")
+        # Mantener el UPDATE condicional contra compras concurrentes y registrar
+        # el valor resultante: queryset.update() por sí solo no genera historial.
+        producto.refresh_from_db(fields=["stock"])
+        producto.save(update_fields=["stock", "updated_at"])
         PedidoItem.objects.create(pedido=pedido, producto=producto, producto_nombre=producto.nombre,
                                   precio_unitario=producto.precio, cantidad=cantidad, subtotal=producto.precio * cantidad)
     if transferencia:
@@ -119,6 +123,8 @@ def reintegrar_stock_pedido(pedido):
         return False
     for item in pedido.items.select_related("producto").order_by("producto_id"):
         Producto.objects.filter(pk=item.producto_id).update(stock=F("stock") + item.cantidad)
+        item.producto.refresh_from_db(fields=["stock"])
+        item.producto.save(update_fields=["stock", "updated_at"])
     pedido.stock_reintegrado = True
     pedido.save(update_fields=["stock_reintegrado", "updated_at"])
     return True

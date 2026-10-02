@@ -3,6 +3,7 @@ from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 from ckeditor_uploader.fields import RichTextUploadingField
+from simple_history.models import HistoricalRecords
 
 
 def catalogo_imagen_upload_to(instance, filename):
@@ -64,6 +65,7 @@ class ItemCatalogo(BasicModel):
 
 class Servicio(ItemCatalogo):
     duracion_minutos = models.PositiveIntegerField(default=30)
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "servicio"
@@ -72,6 +74,7 @@ class Servicio(ItemCatalogo):
 
 class Producto(ItemCatalogo):
     stock = models.PositiveIntegerField(default=0)
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "producto"

@@ -88,6 +88,7 @@ http://127.0.0.1:8000/admin/
 - django-filter
 - drf-spectacular
 - Pillow
+- django-simple-history
 
 ## API REST v1
 
@@ -138,6 +139,27 @@ Ese modelo contiene los campos comunes:
 - `categoria`
 
 Luego `Producto` y `Servicio` heredan de `ItemCatalogo`, evitando duplicar código y manteniendo dos tablas separadas en la base de datos.
+
+### Historial del catálogo
+
+`Producto` y `Servicio` registran altas, modificaciones y bajas mediante
+`django-simple-history`. La auditoría se consulta desde el enlace **Historial**
+de cada objeto en el panel de administración, con los permisos habituales del
+admin. No se publica por la API ni por el catálogo público. `ItemCatalogo` y
+`Categoria` no tienen historial.
+
+La migración `0011_historicalproducto_historicalservicio` crea las tablas
+históricas; no reconstruye cambios anteriores. El usuario queda registrado
+cuando el cambio ocurre dentro de una petición autenticada. Las operaciones
+ejecutadas sin petición (por ejemplo, scripts) pueden figurar sin usuario.
+Las acciones masivas del admin y los descuentos/reintegros de stock del checkout
+generan registros. Si se agregan otros cambios masivos, tener en cuenta que
+`QuerySet.update()` y `bulk_update()` por sí solos no generan historial.
+
+Desde el shell se puede consultar `producto.history.all()` o el último cambio
+con `producto.history.first()`. Para consultar todos los productos históricos,
+usar `Producto.history.all()`. Cada registro expone `history_user` y
+`history_type`: `+` para creación, `~` para modificación y `-` para eliminación.
 
 ## Notas
 
